@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
-import { useWeatherDanang } from "@/hooks/useWeather";
+import { useWeather } from "@/hooks/useWeather";
 import { tripConfig } from "@/config/trip";
 
 const TRIP_START = new Date(tripConfig.tripStart);
@@ -56,7 +56,7 @@ const TodayTab = () => {
   const [selectedDay, setSelectedDay] = useState(phase === "before" ? -1 : todayDayIndex);
   const day = selectedDay >= 0 ? days[selectedDay] : null;
 
-  const { data: weather } = useWeatherDanang();
+  const { data: weather } = useWeather();
 
   const [checklist, setChecklist] = useState<Record<string, boolean>>(() => {
     try {

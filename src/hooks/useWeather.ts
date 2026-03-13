@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { tripConfig } from "@/config/trip";
 
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
 
@@ -111,27 +112,18 @@ async function fetchWeather(lat: number, lon: number, city: string): Promise<Wea
   return { current, forecast: forecast.slice(0, 5) };
 }
 
-// Da Nang coordinates
-const DANANG = { lat: 16.0544, lon: 108.2022, city: "다낭" };
-// Hoi An coordinates
-const HOIAN = { lat: 15.8801, lon: 108.338, city: "호이안" };
-
-export function useWeatherDanang() {
+export function useWeather(locationIndex = tripConfig.weather.defaultIndex) {
+  const loc = tripConfig.weather.locations[locationIndex];
   return useQuery({
-    queryKey: ["weather", "danang"],
-    queryFn: () => fetchWeather(DANANG.lat, DANANG.lon, DANANG.city),
-    staleTime: 30 * 60 * 1000, // 30 minutes
-    retry: 1,
-    enabled: !!API_KEY,
-  });
-}
-
-export function useWeatherHoian() {
-  return useQuery({
-    queryKey: ["weather", "hoian"],
-    queryFn: () => fetchWeather(HOIAN.lat, HOIAN.lon, HOIAN.city),
+    queryKey: ["weather", loc.city],
+    queryFn: () => fetchWeather(loc.lat, loc.lon, loc.city),
     staleTime: 30 * 60 * 1000,
     retry: 1,
     enabled: !!API_KEY,
   });
 }
+
+/** @deprecated Use useWeather() instead */
+export const useWeatherDanang = () => useWeather(0);
+/** @deprecated Use useWeather() instead */
+export const useWeatherHoian = () => useWeather(1);

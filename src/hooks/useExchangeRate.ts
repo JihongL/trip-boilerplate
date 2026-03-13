@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { tripConfig } from "@/config/trip";
 
 interface ExchangeRateData {
   rate: number;
@@ -6,12 +7,10 @@ interface ExchangeRateData {
   isFallback: boolean;
 }
 
-const PRIMARY_URL =
-  "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/krw.min.json";
-const FALLBACK_URL =
-  "https://latest.currency-api.pages.dev/v1/currencies/krw.min.json";
+const { from, to, fallbackRate } = tripConfig.exchange;
+const PRIMARY_URL = `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/${from}.min.json`;
+const FALLBACK_URL = `https://latest.currency-api.pages.dev/v1/currencies/${from}.min.json`;
 
-const FALLBACK_RATE = 18.5;
 const FETCH_TIMEOUT = 5000;
 
 async function fetchWithTimeout(url: string, ms: number): Promise<Response> {
@@ -30,7 +29,7 @@ async function fetchRate(): Promise<ExchangeRateData> {
       const res = await fetchWithTimeout(url, FETCH_TIMEOUT);
       if (!res.ok) continue;
       const data = await res.json();
-      const vndRate = data?.krw?.vnd;
+      const vndRate = data?.[from]?.[to];
       const date = data?.date; // API returns "YYYY-MM-DD"
       if (typeof vndRate === "number" && vndRate > 0) {
         return {
@@ -48,11 +47,11 @@ async function fetchRate(): Promise<ExchangeRateData> {
 
 export function useExchangeRate() {
   return useQuery({
-    queryKey: ["exchange-rate-krw-vnd"],
+    queryKey: ["exchange-rate", from, to],
     queryFn: fetchRate,
     staleTime: 1000 * 60 * 60,
     gcTime: 1000 * 60 * 60 * 24,
     retry: 2,
-    placeholderData: { rate: FALLBACK_RATE, updatedAt: "", isFallback: true },
+    placeholderData: { rate: fallbackRate, updatedAt: "", isFallback: true },
   });
 }
