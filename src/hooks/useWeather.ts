@@ -113,7 +113,8 @@ async function fetchWeather(lat: number, lon: number, city: string): Promise<Wea
 }
 
 export function useWeather(locationIndex = tripConfig.weather.defaultIndex) {
-  const loc = tripConfig.weather.locations[locationIndex];
+  const locations = tripConfig.weather.locations;
+  const loc = locations[Math.min(locationIndex, locations.length - 1)];
   return useQuery({
     queryKey: ["weather", loc.city],
     queryFn: () => fetchWeather(loc.lat, loc.lon, loc.city),

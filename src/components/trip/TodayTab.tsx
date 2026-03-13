@@ -442,7 +442,7 @@ const TodayTab = () => {
             className="space-y-4"
           >
             {/* Hotel card — during trip */}
-            {phase === "during" && day.hotelIndex != null && (
+            {phase === "during" && day.hotelIndex != null && day.hotelIndex < hotels.length && (
               <motion.div variants={contentVariants} custom={0} className="card-base flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
                   <span className="text-xl">🏨</span>

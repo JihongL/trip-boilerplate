@@ -2,7 +2,7 @@ import type { TripConfig } from "./types";
 import meta from "./trip.meta.json";
 
 export const tripConfig: TripConfig = {
-  meta: meta as TripConfig["meta"],
+  meta: meta satisfies TripConfig["meta"],
   tripStart: "2026-03-20T00:00:00+07:00",
   tripEnd: "2026-03-23T23:59:59+07:00",
   mapCenter: [15.97, 108.18],
