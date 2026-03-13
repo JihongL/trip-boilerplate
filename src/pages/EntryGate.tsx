@@ -1,22 +1,12 @@
 import { useState, useRef, useCallback, useEffect, useImperativeHandle, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { tripConfig } from "@/config/trip";
 
 interface EntryGateProps {
   onEnter: () => void;
 }
 
-const rules = [
-  { num: "하나", text: "아직 멀었냐 금지" },
-  { num: "둘", text: "음식이 달다 금지" },
-  { num: "셋", text: "음식이 짜다 금지" },
-  { num: "넷", text: "겨우 이거 보러 왔냐 금지" },
-  { num: "다섯", text: "조식 이게 다냐 금지" },
-  { num: "여섯", text: "돈 아깝다 금지" },
-  { num: "일곱", text: "이 돈이면 집에서 해먹는게 낫다 금지" },
-  { num: "여덟", text: "이거 무슨맛으로 먹냐 금지" },
-  { num: "아홉", text: "이거 한국 돈으로 얼마냐 금지" },
-  { num: "열", text: "물이 제일 맛있다 금지" },
-];
+const rules = tripConfig.rules;
 
 /* ── Signature Pad ── */
 
@@ -208,7 +198,7 @@ async function buildPledgeImage(name: string, signatureDataUrl: string): Promise
   ctx.fillStyle = "#2D2016";
   ctx.font = "bold 18px sans-serif";
   ctx.textAlign = "center";
-  ctx.fillText("우리 가족 베트남 여행 10계명", w / 2, pad + 22);
+  ctx.fillText(tripConfig.pledge.title, w / 2, pad + 22);
 
   // Divider under title
   ctx.strokeStyle = "#E0D5C8";
@@ -354,13 +344,7 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
     }
   };
 
-  const noMessages = [
-    "다시 한번 생각해보세요... 🤔",
-    "진심이세요?! 다낭인데요?! 🏖️",
-    "서여사님 이러시면 안 됩니다 😭",
-    "마지막 기회입니다... 진짜요?",
-    "알겠습니다... (참가 버튼이 커집니다)",
-  ];
+  const noMessages = tripConfig.pledge.declineMessages;
 
   const handleNo = () => {
     setNoCount((prev) => Math.min(prev + 1, noMessages.length));
@@ -370,7 +354,7 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
       <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat opacity-30"
-        style={{ backgroundImage: "url('/vietnam_resort_bg.webp')" }}
+        style={{ backgroundImage: `url('${tripConfig.meta.backgroundImage}')` }}
       />
 
       <AnimatePresence mode="wait">
@@ -394,10 +378,10 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
                 <img src="/vacation_3d_icon.png" alt="Vacation Icon" className="w-28 h-28 object-contain drop-shadow-xl" />
               </div>
               <h1 className="text-2xl font-bold text-foreground mb-2">
-                우리 가족 베트남 여행
+                {tripConfig.pledge.introTitle}
               </h1>
               <p className="text-lg text-muted-foreground">
-                서여사님 생신 축하드립니다! 🎂
+                {tripConfig.pledge.introGreeting}
               </p>
             </motion.div>
 
@@ -407,18 +391,18 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
               transition={{ delay: 0.6 }}
               className="card-base text-center mb-6"
             >
-              <p className="text-3xl mb-3">🇻🇳</p>
+              <p className="text-3xl mb-3">{tripConfig.meta.countryEmoji}</p>
               <h2 className="text-xl font-bold text-foreground mb-2">
-                서여사 생신기념 다낭 · 호이안 여행
+                {tripConfig.meta.tripTitle}
               </h2>
               <p className="text-base text-muted-foreground mb-1">
-                2026.03.20 (금) ~ 03.23 (월) · 3박 4일
+                {tripConfig.meta.subtitle}
               </p>
               <p className="text-sm text-muted-foreground">
                 자녀들이 준비한 특별한 여행에
               </p>
               <p className="text-lg font-bold text-primary mt-3">
-                참가하시겠습니까?
+                {tripConfig.pledge.participationQuestion}
               </p>
             </motion.div>
 
@@ -433,7 +417,7 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
                 className="w-full py-4 rounded-2xl font-bold transition-all duration-300 bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98]"
                 style={{ fontSize: noCount >= 4 ? "1.5rem" : "1.125rem" }}
               >
-                당연하죠! 참가합니다 ✈️
+                {tripConfig.pledge.acceptText}
               </button>
               <button
                 onClick={handleNo}
@@ -443,7 +427,7 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
                   opacity: noCount >= 4 ? 0.4 : 1,
                 }}
               >
-                {noCount === 0 ? "글쎄요..." : "아니요..."}
+                {noCount === 0 ? tripConfig.pledge.declineText : "아니요..."}
               </button>
               <AnimatePresence>
                 {noCount > 0 && (
@@ -466,7 +450,7 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
               transition={{ delay: 1.4 }}
               className="text-center text-xs text-muted-foreground mt-6"
             >
-              다낭 · 호이안 · 2026.03.20 ~ 03.23
+              {tripConfig.meta.subtitle}
             </motion.p>
           </motion.div>
         )}
@@ -491,10 +475,10 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
                 <img src="/vacation_3d_icon.png" alt="Vacation Icon" className="w-24 h-24 object-contain drop-shadow-xl" />
               </div>
               <h1 className="text-2xl font-bold text-foreground mb-1">
-                서여사 생신기념 다낭여행
+                {tripConfig.meta.tripTitle}
               </h1>
               <p className="text-muted-foreground text-parent">
-                서여사 · 이서방과 함께하는 다낭 · 호이안
+                {tripConfig.pledge.rulesHeaderSubtitle}
               </p>
             </motion.div>
 
@@ -505,7 +489,7 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
               className="card-base mb-6"
             >
               <h2 className="text-xl font-bold text-center text-foreground mb-5 pb-3 border-b border-border">
-                서여사 · 이서방 여행 10계명
+                {tripConfig.pledge.rulesHeaderTitle}
               </h2>
               <div className="space-y-3">
                 {rules.map((rule, i) => (
@@ -609,7 +593,7 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
               transition={{ delay: 1.8 }}
               className="text-center text-xs text-muted-foreground mt-6"
             >
-              다낭 · 호이안 · 2026.03.20 ~ 03.23
+              {tripConfig.meta.subtitle}
             </motion.p>
           </motion.div>
         )}

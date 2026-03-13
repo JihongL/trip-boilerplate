@@ -1,95 +1,14 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useWeatherDanang } from "@/hooks/useWeather";
+import { tripConfig } from "@/config/trip";
 
-const TRIP_START = new Date("2026-03-20T00:00:00+07:00");
-const TRIP_END = new Date("2026-03-23T23:59:59+07:00");
+const TRIP_START = new Date(tripConfig.tripStart);
+const TRIP_END = new Date(tripConfig.tripEnd);
 
 type TripPhase = "before" | "during" | "after";
 
-interface ScheduleItem {
-  time: string;
-  activity: string;
-  detail?: string;
-  type: "flight" | "move" | "food" | "stay" | "activity";
-}
-
-interface DayData {
-  day: number;
-  date: string;
-  weekday: string;
-  title: string;
-  location: string;
-  schedule: ScheduleItem[];
-  meals: string[];
-  parentTip: string;
-  preparation: string[];
-}
-
-const days: DayData[] = [
-  {
-    day: 1, date: "3월 20일", weekday: "금", title: "호이안 도착 & 올드타운",
-    location: "호이안",
-    schedule: [
-      { time: "06:45", activity: "인천공항 집합", detail: "터미널 2", type: "flight" },
-      { time: "09:45", activity: "인천 출발 (KE5769)", type: "flight" },
-      { time: "12:30", activity: "다낭 도착", type: "flight" },
-      { time: "13:00", activity: "호이안으로 이동", detail: "차량 약 40분", type: "move" },
-      { time: "14:00", activity: "호텔 체크인 & 휴식", type: "stay" },
-      { time: "16:00", activity: "올드타운 가이드 투어", detail: "일본교 · 중국회관 · 상인 집", type: "activity" },
-      { time: "18:00", activity: "저녁 식사", detail: "White Rose · Cao Lau · Mi Quang", type: "food" },
-      { time: "19:00", activity: "소원보트 + 야시장", type: "activity" },
-    ],
-    meals: ["점심: 기내식 또는 도착 후 간단히", "저녁: 호이안 올드타운"],
-    parentTip: "도착 후 충분히 쉬고 나서 관광 시작. 무리하지 않기!",
-    preparation: ["선크림", "모자", "편한 신발", "물병"],
-  },
-  {
-    day: 2, date: "3월 21일", weekday: "토", title: "액티비티 & 휴식",
-    location: "호이안",
-    schedule: [
-      { time: "08:00", activity: "조식", type: "food" },
-      { time: "09:30", activity: "코코넛 보트 체험", detail: "대나무 보트로 수로 탐험", type: "activity" },
-      { time: "12:00", activity: "점심 식사", type: "food" },
-      { time: "13:30", activity: "호텔 수영장 / 마사지", detail: "서여사 · 이서방 휴식 · 스파 추천", type: "stay" },
-      { time: "17:00", activity: "올드타운 재방문 + 저녁", type: "activity" },
-    ],
-    meals: ["조식: 호텔", "점심: 호이안 로컬", "저녁: 올드타운"],
-    parentTip: "오후는 완전 자유시간. 서여사 · 이서방 컨디션에 맞춰 휴식 우선!",
-    preparation: ["수영복", "갈아입을 옷", "카메라", "선크림"],
-  },
-  {
-    day: 3, date: "3월 22일", weekday: "일", title: "다낭 이동 & 해변",
-    location: "다낭",
-    schedule: [
-      { time: "08:00", activity: "조식", type: "food" },
-      { time: "09:00", activity: "호이안 체크아웃", detail: "Little Oasis Hotel", type: "stay" },
-      { time: "10:00", activity: "다낭으로 이동", detail: "차량 약 40분", type: "move" },
-      { time: "12:00", activity: "다낭 점심", type: "food" },
-      { time: "14:00", activity: "해변 액티비티", detail: "서여사 · 이서방은 해변에서 휴식도 OK", type: "activity" },
-      { time: "15:00", activity: "노보텔 체크인", detail: "Novotel Danang Premier Han River", type: "stay" },
-      { time: "18:00", activity: "다낭 시내 저녁 식사", type: "food" },
-    ],
-    meals: ["조식: 호텔", "점심: 다낭", "저녁: 다낭 시내"],
-    parentTip: "해변에서 무리하지 말고, 그늘에서 쉬는 시간도 갖기",
-    preparation: ["수영복", "선크림", "모자", "샌들"],
-  },
-  {
-    day: 4, date: "3월 23일", weekday: "월", title: "선택 일정 & 귀국",
-    location: "다낭",
-    schedule: [
-      { time: "08:00", activity: "조식", type: "food" },
-      { time: "09:00", activity: "바나힐 or 자유시간", detail: "컨디션 안 좋으면 카페에서 휴식", type: "activity" },
-      { time: "12:00", activity: "점심", type: "food" },
-      { time: "13:00", activity: "공항 이동", type: "move" },
-      { time: "15:45", activity: "다낭 출발 (KE0458)", type: "flight" },
-      { time: "22:05", activity: "인천 도착", type: "flight" },
-    ],
-    meals: ["조식: 호텔", "점심: 간단히", "저녁: 기내식"],
-    parentTip: "마지막 날은 무리하지 않기! 공항 일찍 가서 면세점 구경",
-    preparation: ["여권", "탑승권", "기념품 정리"],
-  },
-];
+const days = tripConfig.schedule;
 
 const typeConfig: Record<string, { icon: string; color: string }> = {
   flight: { icon: "✈️", color: "hsl(210, 70%, 50%)" },
@@ -99,10 +18,12 @@ const typeConfig: Record<string, { icon: string; color: string }> = {
   activity: { icon: "🎯", color: "hsl(45, 90%, 50%)" },
 };
 
-const locationBadge: Record<string, string> = {
-  "호이안": "bg-amber-100 text-amber-800 border-amber-200",
-  "다낭": "bg-sky-100 text-sky-800 border-sky-200",
-};
+const locationBadge: Record<string, string> = Object.fromEntries(
+  Object.entries(tripConfig.areaBadgeColors).map(([area, c]) => [
+    area,
+    `${c.bg} ${c.text} ${c.border}`,
+  ])
+);
 
 const contentVariants: Variants = {
   hidden: { opacity: 0, y: 16 },
@@ -113,6 +34,10 @@ const contentVariants: Variants = {
   }),
   exit: { opacity: 0, y: -8, transition: { duration: 0.2 } },
 };
+
+const checklistItems = tripConfig.checklist.map((c) => c.text);
+const hotels = tripConfig.hotels;
+const flights = tripConfig.flights;
 
 const TodayTab = () => {
   const { now, daysLeft, phase, todayDayIndex } = useMemo(() => {
@@ -213,7 +138,7 @@ const TodayTab = () => {
                 transition={{ delay: 0.6 }}
                 className="text-sm mt-1"
               >
-                2026.03.20 ~ 03.23 · 3박 4일
+                {tripConfig.meta.subtitle}
               </motion.p>
             </div>
           </motion.div>
@@ -262,7 +187,7 @@ const TodayTab = () => {
           >
             <p className="text-4xl mb-2">🎉</p>
             <h2 className="text-xl font-bold text-white">즐거운 여행이었어요!</h2>
-            <p className="text-white/80 text-sm mt-1">다낭 · 호이안 우리 여행 완료</p>
+            <p className="text-white/80 text-sm mt-1">{tripConfig.areas.join(" · ")} 우리 여행 완료</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -277,7 +202,7 @@ const TodayTab = () => {
         >
           <span className="text-2xl">{weather.current.icon || "🌤️"}</span>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">다낭 현재 날씨</p>
+            <p className="text-sm font-semibold text-foreground">{tripConfig.weather.locations[0].city} 현재 날씨</p>
             <p className="text-xs text-muted-foreground">{weather.current.description}</p>
           </div>
           <p className="text-lg font-bold text-primary">{weather.current.temp}°C</p>
@@ -355,7 +280,7 @@ const TodayTab = () => {
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-bold text-foreground">준비 체크리스트</h4>
                 <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary tabular-nums">
-                  {Object.values(checklist).filter(Boolean).length} / 9
+                  {Object.values(checklist).filter(Boolean).length} / {checklistItems.length}
                 </span>
               </div>
               {/* Progress bar */}
@@ -365,13 +290,13 @@ const TodayTab = () => {
                   style={{ background: "hsl(var(--primary))" }}
                   initial={{ width: 0 }}
                   animate={{
-                    width: `${(Object.values(checklist).filter(Boolean).length / 9) * 100}%`,
+                    width: `${(Object.values(checklist).filter(Boolean).length / checklistItems.length) * 100}%`,
                   }}
                   transition={{ duration: 0.5, ease: "easeOut" }}
                 />
               </div>
               <div className="space-y-1">
-                {["여권 (유효기간 6개월 이상)", "항공권 정보 저장", "환전 (베트남 동)", "유심/eSIM 준비", "여행자 보험 가입", "호텔 예약 확인서", "Grab 앱 설치", "상비약 챙기기", "선크림 & 모자"].map((item, i) => {
+                {checklistItems.map((item, i) => {
                   const checked = !!checklist[item];
                   return (
                     <motion.label
@@ -428,21 +353,17 @@ const TodayTab = () => {
                 <div>
                   <p className="text-sm font-bold text-primary mb-1.5">👕 옷차림</p>
                   <ul className="space-y-1.5 text-base text-foreground">
-                    <li>· 낮: 반팔/반바지 (평균 25~30°C)</li>
-                    <li>· 저녁: 얇은 긴팔 하나 (에어컨/바람)</li>
-                    <li>· 비 올 수 있으니 우산 또는 우비</li>
-                    <li>· 호이안 사원 방문 시 긴바지 필요</li>
-                    <li>· 편한 운동화 + 샌들/슬리퍼</li>
+                    {tripConfig.packingGuide.clothing.map((item, i) => (
+                      <li key={i}>· {item}</li>
+                    ))}
                   </ul>
                 </div>
                 <div className="border-t border-border pt-3">
                   <p className="text-sm font-bold text-primary mb-1.5">🧳 캐리어</p>
                   <ul className="space-y-1.5 text-base text-foreground">
-                    <li>· 위탁 수하물: 23kg × 1개 (대한항공)</li>
-                    <li>· 기내 반입: 12kg 이내, 55×40×20cm</li>
-                    <li>· 3박이라 24인치면 충분</li>
-                    <li>· 기념품 공간 여유 두기</li>
-                    <li>· 보조배터리는 기내 반입만 가능</li>
+                    {tripConfig.packingGuide.luggage.map((item, i) => (
+                      <li key={i}>· {item}</li>
+                    ))}
                   </ul>
                 </div>
               </div>
@@ -484,63 +405,35 @@ const TodayTab = () => {
 
             {/* 숙소 */}
             <motion.div variants={contentVariants} custom={2.5} className="space-y-3">
-              {/* Little Oasis */}
-              <div className="card-base">
-                <div className="flex items-start gap-3 mb-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: "hsl(35, 80%, 92%)" }}
-                  >
-                    <span className="text-xl">🏨</span>
+              {hotels.map((hotel, hi) => (
+                <div key={hi} className="card-base">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div
+                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                      style={{ background: hi === 0 ? "hsl(35, 80%, 92%)" : "hsl(210, 70%, 93%)" }}
+                    >
+                      <span className="text-xl">🏨</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-base font-bold text-foreground">{hotel.name}</p>
+                      <p className="text-sm text-muted-foreground">{hotel.address}</p>
+                    </div>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${locationBadge[hotel.area] || ""}`}>
+                      {hotel.area}
+                    </span>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-bold text-foreground">Little Oasis Hotel</p>
-                    <p className="text-sm text-muted-foreground">215 Lê Thánh Tông, Hội An</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${locationBadge["호이안"]}`}>
-                    호이안
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl p-3 text-center" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
-                    <p className="text-xs text-muted-foreground mb-0.5">체크인</p>
-                    <p className="text-sm font-bold text-primary">3/20 (금) 14:00</p>
-                  </div>
-                  <div className="rounded-xl p-3 text-center" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
-                    <p className="text-xs text-muted-foreground mb-0.5">체크아웃</p>
-                    <p className="text-sm font-bold text-foreground">3/22 (일) 12:00</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Novotel */}
-              <div className="card-base">
-                <div className="flex items-start gap-3 mb-3">
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: "hsl(210, 70%, 93%)" }}
-                  >
-                    <span className="text-xl">🏨</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-bold text-foreground">Novotel Danang Premier</p>
-                    <p className="text-sm text-muted-foreground">36 Bach Dang St, Đà Nẵng</p>
-                  </div>
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${locationBadge["다낭"]}`}>
-                    다낭
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-xl p-3 text-center" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
-                    <p className="text-xs text-muted-foreground mb-0.5">체크인</p>
-                    <p className="text-sm font-bold text-primary">3/22 (일) 15:00</p>
-                  </div>
-                  <div className="rounded-xl p-3 text-center" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
-                    <p className="text-xs text-muted-foreground mb-0.5">체크아웃</p>
-                    <p className="text-sm font-bold text-foreground">3/23 (월) 12:00</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-xl p-3 text-center" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
+                      <p className="text-xs text-muted-foreground mb-0.5">체크인</p>
+                      <p className="text-sm font-bold text-primary">{hotel.checkIn}</p>
+                    </div>
+                    <div className="rounded-xl p-3 text-center" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
+                      <p className="text-xs text-muted-foreground mb-0.5">체크아웃</p>
+                      <p className="text-sm font-bold text-foreground">{hotel.checkOut}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </motion.div>
           </motion.div>
         )}
@@ -563,8 +456,8 @@ const TodayTab = () => {
                       <span className="text-xl">🏨</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-base font-bold text-foreground">Little Oasis Hotel</p>
-                      <p className="text-sm text-muted-foreground">215 Lê Thánh Tông, Hội An</p>
+                      <p className="text-base font-bold text-foreground">{hotels[0].name}</p>
+                      <p className="text-sm text-muted-foreground">{hotels[0].address}</p>
                       {day.day === 2 && <p className="text-xs text-primary font-semibold mt-1">내일 12:00 체크아웃 → 다낭 이동</p>}
                     </div>
                   </motion.div>
@@ -574,7 +467,7 @@ const TodayTab = () => {
                     <div className="card-base flex items-center gap-3 opacity-50">
                       <span className="text-xl">🏨</span>
                       <div>
-                        <p className="text-sm text-muted-foreground line-through">Little Oasis Hotel</p>
+                        <p className="text-sm text-muted-foreground line-through">{hotels[0].name}</p>
                         <p className="text-xs text-muted-foreground">12:00 체크아웃 완료</p>
                       </div>
                     </div>
@@ -583,8 +476,8 @@ const TodayTab = () => {
                         <span className="text-xl">🏨</span>
                       </div>
                       <div className="flex-1">
-                        <p className="text-base font-bold text-foreground">Novotel Danang Premier</p>
-                        <p className="text-sm text-muted-foreground">36 Bach Dang St, Đà Nẵng</p>
+                        <p className="text-base font-bold text-foreground">{hotels[1].name}</p>
+                        <p className="text-sm text-muted-foreground">{hotels[1].address}</p>
                         <p className="text-xs text-primary font-semibold mt-1">15:00 체크인</p>
                       </div>
                     </div>
@@ -596,8 +489,8 @@ const TodayTab = () => {
                       <span className="text-xl">🏨</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-base font-bold text-foreground">Novotel Danang Premier</p>
-                      <p className="text-sm text-muted-foreground">36 Bach Dang St, Đà Nẵng</p>
+                      <p className="text-base font-bold text-foreground">{hotels[1].name}</p>
+                      <p className="text-sm text-muted-foreground">{hotels[1].address}</p>
                       <p className="text-xs font-semibold mt-1" style={{ color: "hsl(var(--destructive))" }}>12:00 체크아웃 · 짐 정리 잊지 마세요!</p>
                     </div>
                   </motion.div>
@@ -606,8 +499,9 @@ const TodayTab = () => {
             )}
 
             {/* Flight info */}
-            {(selectedDay === 0 || selectedDay === 3) && (
+            {flights.filter((f) => f.dayIndex === selectedDay).map((flight) => (
               <motion.div
+                key={flight.direction}
                 variants={contentVariants}
                 custom={0.5}
                 className="relative overflow-hidden rounded-2xl border-2"
@@ -620,27 +514,27 @@ const TodayTab = () => {
                 <div
                   className="px-5 py-2.5 flex items-center justify-between"
                   style={{
-                    background: selectedDay === 0
+                    background: flight.direction === "outbound"
                       ? "linear-gradient(135deg, hsl(210, 70%, 50%), hsl(210, 80%, 58%))"
                       : "linear-gradient(135deg, hsl(20, 85%, 55%), hsl(35, 90%, 58%))",
                   }}
                 >
                   <span className="text-sm font-bold text-white">
-                    {selectedDay === 0 ? "가는편" : "오는편"}
+                    {flight.label}
                   </span>
                   <span className="text-sm text-white/80">
-                    대한항공 {selectedDay === 0 ? "KE5769" : "KE0458"}
+                    {flight.airline}
                   </span>
                 </div>
                 <div className="px-5 py-4">
                   <div className="flex items-center justify-between">
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-foreground">{selectedDay === 0 ? "ICN" : "DAD"}</p>
-                      <p className="text-sm text-muted-foreground">{selectedDay === 0 ? "인천" : "다낭"}</p>
-                      <p className="text-base font-bold text-primary mt-1">{selectedDay === 0 ? "09:45" : "15:45"}</p>
+                      <p className="text-2xl font-bold text-foreground">{flight.fromCode}</p>
+                      <p className="text-sm text-muted-foreground">{flight.fromCity}</p>
+                      <p className="text-base font-bold text-primary mt-1">{flight.departTime}</p>
                     </div>
                     <div className="flex-1 mx-4 flex flex-col items-center">
-                      <p className="text-xs text-muted-foreground mb-2">{selectedDay === 0 ? "4시간 45분" : "4시간 20분"}</p>
+                      <p className="text-xs text-muted-foreground mb-2">{flight.duration}</p>
                       <div className="w-full h-px bg-border relative">
                         <div className="absolute left-0 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary" />
                         <motion.div
@@ -654,20 +548,20 @@ const TodayTab = () => {
                       </div>
                     </div>
                     <div className="text-center">
-                      <p className="text-2xl font-bold text-foreground">{selectedDay === 0 ? "DAD" : "ICN"}</p>
-                      <p className="text-sm text-muted-foreground">{selectedDay === 0 ? "다낭" : "인천"}</p>
-                      <p className="text-base font-bold text-primary mt-1">{selectedDay === 0 ? "12:30" : "22:05"}</p>
+                      <p className="text-2xl font-bold text-foreground">{flight.toCode}</p>
+                      <p className="text-sm text-muted-foreground">{flight.toCity}</p>
+                      <p className="text-base font-bold text-primary mt-1">{flight.arriveTime}</p>
                     </div>
                   </div>
                 </div>
-                {selectedDay === 0 && (
+                {flight.note && (
                   <div className="mx-5 mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3">
-                    <p className="text-sm font-bold text-amber-800">진에어(LJ) 카운터에서 탑승수속!</p>
-                    <p className="text-xs text-amber-700 mt-0.5">대한항공 코드셰어 · 터미널 2 · 예약번호 EPL***</p>
+                    <p className="text-sm font-bold text-amber-800">{flight.note.split("·")[0].trim()}</p>
+                    <p className="text-xs text-amber-700 mt-0.5">{flight.note}</p>
                   </div>
                 )}
               </motion.div>
-            )}
+            ))}
 
             {/* Parent tip */}
             <motion.div
