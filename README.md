@@ -1,73 +1,40 @@
-# Welcome to your Lovable project
+# Trip Boilerplate
 
-## Project info
+Config-driven travel app boilerplate. Config 파일 하나만 바꾸면 새로운 여행 앱 완성.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Tech Stack
 
-## How can I edit this code?
+Vite · React 18 · TypeScript · Tailwind CSS · shadcn/ui · PWA
 
-There are several ways of editing your application.
-
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Quick Start
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+git clone https://github.com/JihongL/trip-boilerplate.git
+cd trip-boilerplate
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## New Trip 만들기
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+1. `src/config/trip.ts` — 일정, POI, 연락처, 환율 등 데이터 수정
+2. `src/config/trip.meta.json` — 앱 이름, 테마색, PWA 설정 수정
+3. `public/` — 헤더/배경 이미지 교체
+4. `.env` — `VITE_OPENWEATHER_API_KEY` 설정
 
-**Use GitHub Codespaces**
+또는 Claude Code에게:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+"일본 오사카 3박4일 여행으로 config 만들어줘"
+```
 
-## What technologies are used for this project?
+자세한 가이드: [TRIP-GUIDE.md](./TRIP-GUIDE.md)
 
-This project is built with:
+## Config 구조
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```
+src/config/
+├── types.ts           # TripConfig 타입 정의
+├── trip.ts            # 여행 데이터 (베트남 예시 포함)
+└── trip.meta.json     # 빌드타임 메타 (앱이름, 테마색, PWA)
+```
