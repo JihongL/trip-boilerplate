@@ -1,8 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
+import { createHtmlPlugin } from "vite-plugin-html";
+import tripMeta from "./src/config/trip.meta.json";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -15,17 +16,26 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === "development" && componentTagger(),
+    createHtmlPlugin({
+      inject: {
+        data: {
+          title: tripMeta.appName,
+          description: tripMeta.description,
+          themeColor: tripMeta.themeColor,
+          shortName: tripMeta.shortName,
+        },
+      },
+    }),
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: [],
       manifest: {
         lang: "ko",
-        name: "서여사 생신기념 - 다낭 · 호이안",
-        short_name: "베트남 계획",
-        description: "서여사 생신기념 다낭 · 호이안 여행",
-        theme_color: "#E8773A",
-        background_color: "#FAF6F1",
+        name: tripMeta.appName,
+        short_name: tripMeta.shortName,
+        description: tripMeta.description,
+        theme_color: tripMeta.themeColor,
+        background_color: tripMeta.backgroundColor,
         display: "standalone",
         orientation: "portrait",
         start_url: "/",
