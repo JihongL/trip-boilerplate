@@ -48,6 +48,8 @@ export interface DaySchedule {
   meals: string[];
   parentTip: string;
   preparation: string[];
+  /** 이 날 묵는 호텔의 인덱스 (hotels 배열 기준) */
+  hotelIndex?: number;
 }
 
 export interface Hotel {
@@ -152,6 +154,7 @@ export interface PledgeConfig {
   declineMessages: string[];
   introGreeting: string;
   introTitle: string;
+  introDescription: string;
   rulesHeaderTitle: string;
   rulesHeaderSubtitle: string;
 }
@@ -181,6 +184,10 @@ export interface TripConfig {
   mapZoom: number;
   areas: string[];
   areaBadgeColors: Record<string, { bg: string; text: string; border: string }>;
+  /** 지역별 그라데이션 색상 */
+  locationGradients: Record<string, { gradient: string }>;
+  /** 부모님 팁 카드 라벨 */
+  parentTipLabel: string;
   headerLabel: string;
   footerText: string;
 }

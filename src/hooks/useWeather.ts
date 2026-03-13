@@ -123,7 +123,3 @@ export function useWeather(locationIndex = tripConfig.weather.defaultIndex) {
   });
 }
 
-/** @deprecated Use useWeather() instead */
-export const useWeatherDanang = () => useWeather(0);
-/** @deprecated Use useWeather() instead */
-export const useWeatherHoian = () => useWeather(1);

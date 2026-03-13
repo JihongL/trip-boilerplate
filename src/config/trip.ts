@@ -12,6 +12,11 @@ export const tripConfig: TripConfig = {
     "호이안": { bg: "bg-amber-100", text: "text-amber-800", border: "border-amber-200" },
     "다낭": { bg: "bg-sky-100", text: "text-sky-800", border: "border-sky-200" },
   },
+  locationGradients: {
+    "호이안": { gradient: "linear-gradient(135deg, hsl(35, 80%, 52%) 0%, hsl(25, 90%, 55%) 100%)" },
+    "다낭": { gradient: "linear-gradient(135deg, hsl(200, 70%, 48%) 0%, hsl(210, 80%, 55%) 100%)" },
+  },
+  parentTipLabel: "서여사 · 이서방 체크!",
   headerLabel: "서여사 생신기념 여행",
   footerText: "jihong.lee@outlook.com",
 
@@ -30,6 +35,7 @@ export const tripConfig: TripConfig = {
     ],
     introGreeting: "서여사님 생신 축하드립니다! 🎂",
     introTitle: "우리 가족 베트남 여행",
+    introDescription: "자녀들이 준비한 특별한 여행에",
     rulesHeaderTitle: "서여사 · 이서방 여행 10계명",
     rulesHeaderSubtitle: "서여사 · 이서방과 함께하는 다낭 · 호이안",
   },
@@ -49,7 +55,7 @@ export const tripConfig: TripConfig = {
 
   schedule: [
     {
-      day: 1, date: "3월 20일", weekday: "금", title: "호이안 도착 & 올드타운", location: "호이안",
+      day: 1, date: "3월 20일", weekday: "금", title: "호이안 도착 & 올드타운", location: "호이안", hotelIndex: 0,
       schedule: [
         { time: "06:45", activity: "인천공항 집합", detail: "터미널 2", type: "flight" },
         { time: "09:45", activity: "인천 출발 (KE5769)", type: "flight" },
@@ -65,7 +71,7 @@ export const tripConfig: TripConfig = {
       preparation: ["선크림", "모자", "편한 신발", "물병"],
     },
     {
-      day: 2, date: "3월 21일", weekday: "토", title: "액티비티 & 휴식", location: "호이안",
+      day: 2, date: "3월 21일", weekday: "토", title: "액티비티 & 휴식", location: "호이안", hotelIndex: 0,
       schedule: [
         { time: "08:00", activity: "조식", type: "food" },
         { time: "09:30", activity: "코코넛 보트 체험", detail: "대나무 보트로 수로 탐험", type: "activity" },
@@ -78,7 +84,7 @@ export const tripConfig: TripConfig = {
       preparation: ["수영복", "갈아입을 옷", "카메라", "선크림"],
     },
     {
-      day: 3, date: "3월 22일", weekday: "일", title: "다낭 이동 & 해변", location: "다낭",
+      day: 3, date: "3월 22일", weekday: "일", title: "다낭 이동 & 해변", location: "다낭", hotelIndex: 1,
       schedule: [
         { time: "08:00", activity: "조식", type: "food" },
         { time: "09:00", activity: "호이안 체크아웃", detail: "Little Oasis Hotel", type: "stay" },
@@ -93,7 +99,7 @@ export const tripConfig: TripConfig = {
       preparation: ["수영복", "선크림", "모자", "샌들"],
     },
     {
-      day: 4, date: "3월 23일", weekday: "월", title: "선택 일정 & 귀국", location: "다낭",
+      day: 4, date: "3월 23일", weekday: "월", title: "선택 일정 & 귀국", location: "다낭", hotelIndex: 1,
       schedule: [
         { time: "08:00", activity: "조식", type: "food" },
         { time: "09:00", activity: "바나힐 or 자유시간", detail: "컨디션 안 좋으면 카페에서 휴식", type: "activity" },

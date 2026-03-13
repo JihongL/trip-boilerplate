@@ -113,7 +113,7 @@ const TodayTab = () => {
                 transition={{ delay: 0.2 }}
                 className="text-sm font-medium tracking-widest uppercase opacity-80"
               >
-                Da Nang · Hoi An
+                {tripConfig.areas.join(" · ")}
               </motion.p>
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -153,9 +153,8 @@ const TodayTab = () => {
             transition={{ duration: 0.4 }}
             className="relative overflow-hidden rounded-3xl"
             style={{
-              background: day.location === "호이안"
-                ? "linear-gradient(135deg, hsl(35, 80%, 52%) 0%, hsl(25, 90%, 55%) 100%)"
-                : "linear-gradient(135deg, hsl(200, 70%, 48%) 0%, hsl(210, 80%, 55%) 100%)",
+              background: tripConfig.locationGradients[day.location]?.gradient
+                || "linear-gradient(135deg, hsl(200, 70%, 48%) 0%, hsl(210, 80%, 55%) 100%)",
             }}
           >
             <div className="relative px-6 py-5 text-white">
@@ -377,12 +376,7 @@ const TodayTab = () => {
                   <div key={d.day}>
                     <div className="flex items-center gap-2 mb-2">
                       <span
-                        className="text-xs font-bold px-2 py-0.5 rounded-md border"
-                        style={{
-                          borderColor: d.location === "호이안" ? "hsl(35, 80%, 70%)" : "hsl(210, 70%, 70%)",
-                          background: d.location === "호이안" ? "hsl(35, 80%, 95%)" : "hsl(210, 70%, 95%)",
-                          color: d.location === "호이안" ? "hsl(35, 80%, 35%)" : "hsl(210, 70%, 35%)",
-                        }}
+                        className={`text-xs font-bold px-2 py-0.5 rounded-md border ${locationBadge[d.location] || ""}`}
                       >
                         Day {d.day}
                       </span>
@@ -448,54 +442,19 @@ const TodayTab = () => {
             className="space-y-4"
           >
             {/* Hotel card — during trip */}
-            {phase === "during" && (
-              <>
-                {day.day <= 2 && (
-                  <motion.div variants={contentVariants} custom={0} className="card-base flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(35, 80%, 92%)" }}>
-                      <span className="text-xl">🏨</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-base font-bold text-foreground">{hotels[0].name}</p>
-                      <p className="text-sm text-muted-foreground">{hotels[0].address}</p>
-                      {day.day === 2 && <p className="text-xs text-primary font-semibold mt-1">내일 12:00 체크아웃 → 다낭 이동</p>}
-                    </div>
-                  </motion.div>
-                )}
-                {day.day === 3 && (
-                  <motion.div variants={contentVariants} custom={0} className="space-y-2">
-                    <div className="card-base flex items-center gap-3 opacity-50">
-                      <span className="text-xl">🏨</span>
-                      <div>
-                        <p className="text-sm text-muted-foreground line-through">{hotels[0].name}</p>
-                        <p className="text-xs text-muted-foreground">12:00 체크아웃 완료</p>
-                      </div>
-                    </div>
-                    <div className="card-base flex items-center gap-3" style={{ boxShadow: "0 0 0 2px hsl(var(--primary) / 0.25)" }}>
-                      <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(210, 70%, 93%)" }}>
-                        <span className="text-xl">🏨</span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-base font-bold text-foreground">{hotels[1].name}</p>
-                        <p className="text-sm text-muted-foreground">{hotels[1].address}</p>
-                        <p className="text-xs text-primary font-semibold mt-1">15:00 체크인</p>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-                {day.day === 4 && (
-                  <motion.div variants={contentVariants} custom={0} className="card-base flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(210, 70%, 93%)" }}>
-                      <span className="text-xl">🏨</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-base font-bold text-foreground">{hotels[1].name}</p>
-                      <p className="text-sm text-muted-foreground">{hotels[1].address}</p>
-                      <p className="text-xs font-semibold mt-1" style={{ color: "hsl(var(--destructive))" }}>12:00 체크아웃 · 짐 정리 잊지 마세요!</p>
-                    </div>
-                  </motion.div>
-                )}
-              </>
+            {phase === "during" && day.hotelIndex != null && (
+              <motion.div variants={contentVariants} custom={0} className="card-base flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: "hsl(var(--secondary) / 0.5)" }}>
+                  <span className="text-xl">🏨</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-base font-bold text-foreground">{hotels[day.hotelIndex].name}</p>
+                  <p className="text-sm text-muted-foreground">{hotels[day.hotelIndex].address}</p>
+                </div>
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${locationBadge[hotels[day.hotelIndex].area] || ""}`}>
+                  {hotels[day.hotelIndex].area}
+                </span>
+              </motion.div>
             )}
 
             {/* Flight info */}
@@ -573,7 +532,7 @@ const TodayTab = () => {
                 borderColor: "hsl(var(--primary) / 0.18)",
               }}
             >
-              <p className="text-base font-bold text-primary mb-1">서여사 · 이서방 체크!</p>
+              <p className="text-base font-bold text-primary mb-1">{tripConfig.parentTipLabel}</p>
               <p className="text-base text-foreground leading-relaxed">{day.parentTip}</p>
             </motion.div>
 

@@ -191,7 +191,7 @@ async function buildPledgeImage(name: string, signatureDataUrl: string): Promise
   ctx.scale(dpr, dpr);
 
   // Background
-  ctx.fillStyle = "#FAF6F1";
+  ctx.fillStyle = tripConfig.meta.backgroundColor;
   ctx.fillRect(0, 0, w, totalH);
 
   // Title
@@ -399,7 +399,7 @@ const EntryGate = ({ onEnter }: EntryGateProps) => {
                 {tripConfig.meta.subtitle}
               </p>
               <p className="text-sm text-muted-foreground">
-                자녀들이 준비한 특별한 여행에
+                {tripConfig.pledge.introDescription}
               </p>
               <p className="text-lg font-bold text-primary mt-3">
                 {tripConfig.pledge.participationQuestion}
