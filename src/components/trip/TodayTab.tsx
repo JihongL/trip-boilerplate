@@ -7,6 +7,7 @@ import { Phone, AlertTriangle } from "lucide-react";
 import { tripConfig } from "@/config/trip";
 import { useTripWeather } from "@/hooks/useWeather";
 import { useOnline } from "@/hooks/useOnline";
+import { resolveDayOption } from "@/lib/dayOptions";
 import { cn } from "@/lib/utils";
 import NavButton from "./NavButton";
 import type { DaySchedule, ScheduleEvent, ScheduleType, RouteStop, Stay, StayFacilities } from "@/config/types";
@@ -550,32 +551,43 @@ const TodayTab = () => {
   }, [now]);
 
   const [selectedIndex, setSelectedIndex] = useState(() => (phase === "during" && todayIndex >= 0 ? todayIndex : 0));
+  const [optionSelection, setOptionSelection] = useState<{ day: number; optionId: string } | null>(null);
 
   useEffect(() => {
-    if (phase === "during" && todayIndex >= 0) setSelectedIndex(todayIndex);
+    if (phase === "during" && todayIndex >= 0) {
+      setSelectedIndex(todayIndex);
+      setOptionSelection(null);
+    }
   }, [phase, todayIndex]);
 
   const selectedDay = tripConfig.schedule[selectedIndex] ?? tripConfig.schedule[0];
+  const selectedOptionId = selectedDay && optionSelection?.day === selectedDay.day ? optionSelection.optionId : null;
+  const optionResolution = useMemo(
+    () => (selectedDay ? resolveDayOption(selectedDay, selectedOptionId) : null),
+    [selectedDay, selectedOptionId],
+  );
+  const effectiveDay = optionResolution?.effectiveDay;
+  const activeOption = optionResolution?.activeOption ?? null;
   const isSelectedToday = phase === "during" && selectedIndex === todayIndex;
 
-  const weatherIndex = selectedDay?.weatherIndex ?? tripConfig.weather.defaultIndex;
+  const weatherIndex = effectiveDay?.weatherIndex ?? tripConfig.weather.defaultIndex;
   const weather: TripWeatherResult = useTripWeather(weatherIndex);
   const weatherLocation = tripConfig.weather.locations[weatherIndex];
   const weatherLabel = weatherLocation?.label ?? weatherLocation?.city ?? "날씨";
 
   const nextEventIndex = useMemo(() => {
-    if (!isSelectedToday || !selectedDay) return -1;
+    if (!isSelectedToday || !effectiveDay) return -1;
     const nowMin = kstMinutes(now);
-    return selectedDay.schedule.findIndex((event) => {
+    return effectiveDay.schedule.findIndex((event) => {
       const minutes = parseTimeToMinutes(event.time);
       return minutes !== null && minutes >= nowMin;
     });
-  }, [isSelectedToday, now, selectedDay]);
+  }, [isSelectedToday, now, effectiveDay]);
 
-  const stay = selectedDay?.stayIndex != null ? tripConfig.stays[selectedDay.stayIndex] : undefined;
-  const areaColor = selectedDay ? tripConfig.areaBadgeColors[selectedDay.location] : undefined;
+  const stay = effectiveDay?.stayIndex != null ? tripConfig.stays[effectiveDay.stayIndex] : undefined;
+  const areaColor = effectiveDay ? tripConfig.areaBadgeColors[effectiveDay.location] : undefined;
 
-  if (!selectedDay) {
+  if (!effectiveDay) {
     return (
       <div className="card-base text-center">
         <p className="text-sm text-muted-foreground">일정 정보를 불러오지 못했어요</p>
@@ -638,7 +650,10 @@ const TodayTab = () => {
             <button
               key={d.day}
               type="button"
-              onClick={() => setSelectedIndex(i)}
+              onClick={() => {
+                setSelectedIndex(i);
+                setOptionSelection(null);
+              }}
               className={cn(
                 "flex flex-col items-center justify-center flex-shrink-0 min-w-[4.5rem] min-h-11 rounded-2xl px-3 py-2 border transition-all active:scale-[0.97]",
                 isSelected ? "bg-primary border-primary shadow-sm" : "bg-card border-border",
@@ -656,10 +671,62 @@ const TodayTab = () => {
         })}
       </div>
 
+      {selectedDay.options && selectedDay.options.length >= 2 && (
+        <motion.div
+          key={`options-${selectedDay.day}`}
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-2"
+          role="radiogroup"
+          aria-label={`${selectedDay.date} 일정 옵션 선택`}
+        >
+          <p className="px-1 text-xs font-bold tracking-wide text-muted-foreground">일정 옵션 선택</p>
+          <div className="grid gap-2">
+            {selectedDay.options.map((option) => {
+              const isActive = activeOption?.id === option.id;
+              return (
+                <motion.button
+                  key={option.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={isActive}
+                  aria-label={`${option.label} 선택: ${option.subtitle}`}
+                  onClick={() => setOptionSelection({ day: selectedDay.day, optionId: option.id })}
+                  whileTap={{ scale: 0.98 }}
+                  className={cn(
+                    "min-h-11 rounded-2xl border p-3.5 text-left transition-colors",
+                    isActive ? "border-2 border-primary bg-primary/8 shadow-sm" : "border-border bg-card",
+                  )}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="text-2xl" aria-hidden="true">{option.emoji}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-base font-bold text-foreground">{option.label}</span>
+                      <span className="block text-sm text-muted-foreground">{option.subtitle}</span>
+                    </span>
+                    {isActive && (
+                      <motion.span
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground"
+                        aria-hidden="true"
+                      >
+                        ✓
+                      </motion.span>
+                    )}
+                  </span>
+                </motion.button>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
       {/* ── 선택된 날 ── */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={selectedIndex}
+          key={`${selectedIndex}-${activeOption?.id ?? "default"}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
@@ -682,29 +749,29 @@ const TodayTab = () => {
                   : "bg-secondary text-secondary-foreground border-border"
               )}
             >
-              {selectedDay.location}
+              {effectiveDay.location}
             </span>
           </div>
 
           {isSelectedToday && nextEventIndex !== -1 && (
-            <NextUpCard event={selectedDay.schedule[nextEventIndex]} />
+            <NextUpCard event={effectiveDay.schedule[nextEventIndex]} />
           )}
 
           {stay && <StayCard stay={stay} />}
 
-          {selectedDay.stops && selectedDay.stops.length > 0 && <RouteSection stops={selectedDay.stops} />}
+          {effectiveDay.stops && effectiveDay.stops.length > 0 && <RouteSection stops={effectiveDay.stops} />}
 
-          <WeatherSection day={selectedDay} weather={weather} label={weatherLabel} isOnline={isOnline} now={now} />
+          <WeatherSection day={effectiveDay} weather={weather} label={weatherLabel} isOnline={isOnline} now={now} />
 
           {/* Timeline */}
           <div className="card-base">
             <h4 className="text-sm font-bold text-foreground mb-4">
-              {selectedDay.date} ({selectedDay.weekday}) 일정
+              {effectiveDay.date} ({effectiveDay.weekday}) 일정
             </h4>
             <div className="relative">
               <div className="absolute left-[1.6rem] top-3 bottom-3 w-px bg-border" />
               <div className="space-y-1">
-                {selectedDay.schedule.map((event, i) => {
+                {effectiveDay.schedule.map((event, i) => {
                   const config = TYPE_CONFIG[event.type];
                   const isPlaceholder = event.type === "placeholder";
                   const isNext = i === nextEventIndex;
@@ -749,19 +816,23 @@ const TodayTab = () => {
           {/* Day tip */}
           <div className="rounded-2xl p-4 border border-primary/18 bg-primary/6">
             <p className="text-sm font-bold text-primary mb-1">{tripConfig.dayTipLabel}</p>
-            <p className="text-sm text-foreground leading-relaxed">{selectedDay.dayTip}</p>
+            <p className="text-sm text-foreground leading-relaxed">{effectiveDay.dayTip}</p>
           </div>
 
           {/* 준비물 */}
-          {selectedDay.preparation.length > 0 && (
-            <ChecklistCard title="오늘의 준비물" items={selectedDay.preparation} storageKey={`trip-day${selectedDay.day}-prep`} />
+          {effectiveDay.preparation.length > 0 && (
+            <ChecklistCard
+              title="오늘의 준비물"
+              items={effectiveDay.preparation}
+              storageKey={`trip-day${effectiveDay.day}${activeOption ? `-${activeOption.id}` : ""}-prep`}
+            />
           )}
 
           {/* 식사 */}
-          {selectedDay.meals.length > 0 && (
+          {effectiveDay.meals.length > 0 && (
             <div className="rounded-2xl p-4 border border-coral/25 bg-coral/8">
               <p className="text-sm font-bold text-coral mb-2">🍴 식사</p>
-              {selectedDay.meals.map((meal, i) => (
+              {effectiveDay.meals.map((meal, i) => (
                 <p key={i} className="text-sm text-foreground leading-relaxed">
                   {meal}
                 </p>

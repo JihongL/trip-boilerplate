@@ -285,6 +285,33 @@ export interface RouteStop {
   lng: number;
 }
 
+/**
+ * 하루에 여러 안이 있을 때 고르는 선택지.
+ *
+ * 예: 8/16 은 강릉 바다 / 커피·시내 / 실내 / 진부·대관령 4개 안 중 당일 결정한다.
+ * 이런 걸 dayTip 문단에 나열하면 각 안의 장소가 내비로 연결되지 않아 쓸모가 없다.
+ * 옵션으로 만들면 안마다 실제 타임라인과 내비 버튼이 붙는다.
+ *
+ * `schedule` 이하 필드는 **생략하면 DaySchedule 의 같은 필드를 상속**한다.
+ * 덕분에 "앞뒤는 같고 가운데만 다른 날"을 중복 없이 표현할 수 있다.
+ */
+export interface DayOption {
+  id: string;
+  emoji: string;
+  /** 선택 카드의 제목 (예: "A 바다") */
+  label: string;
+  /** 선택 카드의 한 줄 설명 (예: "경포 · 안목 커피거리 · 오죽헌") */
+  subtitle: string;
+
+  location?: string;
+  schedule?: ScheduleEvent[];
+  meals?: string[];
+  dayTip?: string;
+  preparation?: string[];
+  stops?: RouteStop[];
+  weatherIndex?: number;
+}
+
 export interface DaySchedule {
   day: number;
   date: string;
@@ -302,6 +329,11 @@ export interface DaySchedule {
   stops?: RouteStop[];
   /** weather.locations 인덱스. 그날 기준 지점 */
   weatherIndex?: number;
+  /**
+   * 2개 이상이면 TodayTab 에 선택 카드가 뜬다.
+   * 위의 schedule/meals/dayTip 등은 옵션이 해당 필드를 생략했을 때의 기본값이 된다.
+   */
+  options?: DayOption[];
 }
 
 export interface ChecklistItem {
