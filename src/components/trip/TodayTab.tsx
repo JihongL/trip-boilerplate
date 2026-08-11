@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet";
 import L from "leaflet";
@@ -91,8 +91,8 @@ function parseTimeToMinutes(time: string): number | null {
   return hour * 60 + minute;
 }
 
-function nowKstMinutes(): number {
-  const parts = kstTimeFormatter.formatToParts(new Date());
+function kstMinutes(date: Date): number {
+  const parts = kstTimeFormatter.formatToParts(date);
   const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
   const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
   return hour * 60 + minute;
@@ -141,11 +141,17 @@ function createEmojiIcon(emoji: string) {
 
 function RouteSection({ stops }: { stops: RouteStop[] }) {
   const isOnline = useOnline();
+  const [tileLoadFailed, setTileLoadFailed] = useState(false);
+  const showMap = isOnline && !tileLoadFailed;
+
+  useEffect(() => {
+    if (!isOnline) setTileLoadFailed(false);
+  }, [isOnline]);
 
   return (
     <div className="card-base">
       <p className="text-sm font-bold text-foreground mb-3">🗺️ 오늘의 이동경로</p>
-      {isOnline ? (
+      {showMap ? (
         <div className="relative z-0 rounded-2xl overflow-hidden border border-border" style={{ height: 200 }}>
           <MapContainer
             key={stops.map((s, i) => `${s.name}-${i}-${s.lat}-${s.lng}`).join("|")}
@@ -159,7 +165,10 @@ function RouteSection({ stops }: { stops: RouteStop[] }) {
             touchZoom={false}
             attributionControl={false}
           >
-            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              eventHandlers={{ tileerror: () => setTileLoadFailed(true) }}
+            />
             {stops.map((stop, i) => (
               <Marker key={`${stop.name}-${i}`} position={[stop.lat, stop.lng]} icon={createEmojiIcon(stop.emoji)} />
             ))}
@@ -172,7 +181,7 @@ function RouteSection({ stops }: { stops: RouteStop[] }) {
       ) : (
         <div>
           <p className="text-xs text-muted-foreground mb-3">
-            오프라인이라 지도 타일을 불러올 수 없어요. 경유지는 이 순서예요.
+            {isOnline ? "지도 타일을 불러오지 못했어요." : "오프라인이라 지도 타일을 불러올 수 없어요."} 경유지는 이 순서예요.
           </p>
           <ol className="space-y-1.5">
             {stops.map((stop, i) => (
@@ -346,12 +355,22 @@ function WeatherSection({
   weather,
   label,
   isOnline,
+  now,
 }: {
   day: DaySchedule;
   weather: TripWeatherResult;
   label: string;
   isOnline: boolean;
+  now: Date;
 }) {
+  if (!isOnline) {
+    return (
+      <div className="card-base">
+        <p className="text-sm text-muted-foreground">🌤️ 날씨는 연결되면 표시돼요</p>
+      </div>
+    );
+  }
+
   if (weather.loading) {
     return (
       <div className="card-base space-y-2" aria-busy="true">
@@ -361,7 +380,7 @@ function WeatherSection({
     );
   }
 
-  if (weather.error || !isOnline) {
+  if (weather.error) {
     return (
       <div className="card-base">
         <p className="text-sm text-muted-foreground">🌤️ 날씨는 연결되면 표시돼요</p>
@@ -370,6 +389,7 @@ function WeatherSection({
   }
 
   const targetDateStr = kstDateFormatter.format(dateForDay(day.day));
+  const isTargetToday = targetDateStr === kstDateFormatter.format(now);
   const forecast = weather.daily?.find((d) => d.date === targetDateStr);
 
   return (
@@ -378,7 +398,7 @@ function WeatherSection({
         <p className="text-sm font-bold text-foreground">{day.date} 날씨</p>
         <div className="flex items-center gap-1.5">
           {!forecast && (
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border border-sand/40 bg-sand/15 text-sand-deep">
+            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md border border-border bg-muted text-muted-foreground">
               예보 범위 밖
             </span>
           )}
@@ -403,7 +423,7 @@ function WeatherSection({
             <p className="text-xs text-muted-foreground flex-shrink-0">☔ {forecast.pop}%</p>
           )}
         </div>
-      ) : weather.current ? (
+      ) : isTargetToday && weather.current ? (
         <div className="flex items-center gap-4">
           <span className="text-4xl">{weather.current.icon}</span>
           <div className="flex-1 min-w-0">
@@ -493,9 +513,23 @@ function ChecklistCard({ title, items, storageKey }: { title: string; items: str
 
 const TodayTab = () => {
   const isOnline = useOnline();
+  const [now, setNow] = useState(() => new Date());
+
+  // PWA를 열어 둔 채 일정 시간이 지나거나 자정을 넘겨도
+  // "다음 일정"과 "오늘"이 이전 값에 멈춰 있지 않게 갱신한다.
+  useEffect(() => {
+    const refreshNow = () => setNow(new Date());
+    const timer = window.setInterval(refreshNow, 60_000);
+    document.addEventListener("visibilitychange", refreshNow);
+    window.addEventListener("pageshow", refreshNow);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshNow);
+      window.removeEventListener("pageshow", refreshNow);
+    };
+  }, []);
 
   const { phase, todayIndex, daysLeft } = useMemo(() => {
-    const now = new Date();
     let p: "before" | "during" | "after" = "during";
     if (now.getTime() < TRIP_START.getTime()) p = "before";
     else if (now.getTime() > TRIP_END.getTime()) p = "after";
@@ -513,31 +547,41 @@ const TodayTab = () => {
 
     const dl = Math.max(0, Math.ceil((TRIP_START.getTime() - now.getTime()) / MS_PER_DAY));
     return { phase: p, todayIndex: idx, daysLeft: dl };
-  }, []);
+  }, [now]);
 
   const [selectedIndex, setSelectedIndex] = useState(() => (phase === "during" && todayIndex >= 0 ? todayIndex : 0));
+
+  useEffect(() => {
+    if (phase === "during" && todayIndex >= 0) setSelectedIndex(todayIndex);
+  }, [phase, todayIndex]);
 
   const selectedDay = tripConfig.schedule[selectedIndex] ?? tripConfig.schedule[0];
   const isSelectedToday = phase === "during" && selectedIndex === todayIndex;
 
-  const weatherIndex = selectedDay.weatherIndex ?? tripConfig.weather.defaultIndex;
+  const weatherIndex = selectedDay?.weatherIndex ?? tripConfig.weather.defaultIndex;
   const weather: TripWeatherResult = useTripWeather(weatherIndex);
   const weatherLocation = tripConfig.weather.locations[weatherIndex];
   const weatherLabel = weatherLocation?.label ?? weatherLocation?.city ?? "날씨";
 
   const nextEventIndex = useMemo(() => {
-    if (!isSelectedToday) return -1;
-    const nowMin = nowKstMinutes();
+    if (!isSelectedToday || !selectedDay) return -1;
+    const nowMin = kstMinutes(now);
     return selectedDay.schedule.findIndex((event) => {
       const minutes = parseTimeToMinutes(event.time);
       return minutes !== null && minutes >= nowMin;
     });
-  }, [isSelectedToday, selectedDay]);
+  }, [isSelectedToday, now, selectedDay]);
 
-  const stay = selectedDay.stayIndex != null ? tripConfig.stays[selectedDay.stayIndex] : undefined;
-  const areaColor = tripConfig.areaBadgeColors[selectedDay.location];
+  const stay = selectedDay?.stayIndex != null ? tripConfig.stays[selectedDay.stayIndex] : undefined;
+  const areaColor = selectedDay ? tripConfig.areaBadgeColors[selectedDay.location] : undefined;
 
-  if (!selectedDay) return null;
+  if (!selectedDay) {
+    return (
+      <div className="card-base text-center">
+        <p className="text-sm text-muted-foreground">일정 정보를 불러오지 못했어요</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4 fade-in">
@@ -650,7 +694,7 @@ const TodayTab = () => {
 
           {selectedDay.stops && selectedDay.stops.length > 0 && <RouteSection stops={selectedDay.stops} />}
 
-          <WeatherSection day={selectedDay} weather={weather} label={weatherLabel} isOnline={isOnline} />
+          <WeatherSection day={selectedDay} weather={weather} label={weatherLabel} isOnline={isOnline} now={now} />
 
           {/* Timeline */}
           <div className="card-base">

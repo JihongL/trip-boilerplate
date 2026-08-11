@@ -66,11 +66,21 @@ interface FetchedWeather {
   daily: NonNullable<WeatherResult["daily"]>;
 }
 
+const WEATHER_REQUEST_TIMEOUT_MS = 10_000;
+
 async function fetchTripWeather(lat: number, lon: number): Promise<FetchedWeather> {
-  const [currentRes, forecastRes] = await Promise.all([
-    fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=kr`),
-    fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=kr`),
-  ]);
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), WEATHER_REQUEST_TIMEOUT_MS);
+  let currentRes: Response;
+  let forecastRes: Response;
+  try {
+    [currentRes, forecastRes] = await Promise.all([
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=kr`, { signal: controller.signal }),
+      fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=kr`, { signal: controller.signal }),
+    ]);
+  } finally {
+    window.clearTimeout(timeout);
+  }
 
   if (!currentRes.ok || !forecastRes.ok) {
     throw new Error("날씨 데이터를 가져올 수 없습니다");

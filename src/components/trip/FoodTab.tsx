@@ -55,9 +55,13 @@ function getKoreaTimeParts(now: Date): { weekday: number; minutesSinceMidnight: 
   return { weekday, minutesSinceMidnight: hour * 60 + minute };
 }
 
-function toMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(":").map(Number);
-  return h * 60 + m;
+function toMinutes(hhmm: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+  return hour * 60 + minute;
 }
 
 /** start~end 구간에 t 가 속하는지 판정. start > end 면 자정을 넘기는 영업시간(예: 11:00~02:00)으로 처리한다. */
@@ -73,21 +77,58 @@ function isWithin(start: number, end: number, t: number): boolean {
 export function getOpenState(restaurant: Restaurant, now: Date): OpenState {
   const { weekday, minutesSinceMidnight: t } = getKoreaTimeParts(now);
 
-  if (restaurant.closedWeekdays?.includes(weekday)) {
-    return { kind: "day-off", label: "오늘 휴무" };
-  }
-
   if (!restaurant.openHours) {
+    if (restaurant.closedWeekdays?.includes(weekday)) {
+      return { kind: "day-off", label: "오늘 휴무" };
+    }
     return { kind: "unknown", label: "영업시간 미확인" };
   }
 
   const { open, close, breakStart, breakEnd } = restaurant.openHours;
+  const openMinutes = toMinutes(open);
+  const closeMinutes = toMinutes(close);
+  const breakStartMinutes = breakStart ? toMinutes(breakStart) : null;
+  const breakEndMinutes = breakEnd ? toMinutes(breakEnd) : null;
 
-  if (breakStart && breakEnd && isWithin(toMinutes(breakStart), toMinutes(breakEnd), t)) {
+  if (
+    openMinutes === null ||
+    closeMinutes === null ||
+    (breakStart === undefined) !== (breakEnd === undefined) ||
+    (breakStart !== undefined && breakStartMinutes === null) ||
+    (breakEnd !== undefined && breakEndMinutes === null)
+  ) {
+    return { kind: "unknown", label: "영업시간 미확인" };
+  }
+
+  // 자정을 넘긴 새벽 영업분은 전날 영업일에 속한다.
+  // 예: 금요일 18:00~토요일 02:00의 01:00은 금요일 휴무 여부를 따져야 한다.
+  const crossesMidnight = openMinutes > closeMinutes;
+  const serviceWeekday = crossesMidnight && t < closeMinutes ? (weekday + 6) % 7 : weekday;
+
+  if (restaurant.closedWeekdays?.includes(serviceWeekday)) {
+    return { kind: "day-off", label: "오늘 휴무" };
+  }
+
+  const isBreakTime =
+    breakStart &&
+    breakEnd &&
+    breakStartMinutes !== null &&
+    breakEndMinutes !== null &&
+    isWithin(breakStartMinutes, breakEndMinutes, t);
+  const isOpenTime = isWithin(openMinutes, closeMinutes, t);
+
+  // closedWeekdays 미지정 + closedDays "확인 필요"면 주간 휴무일을 모른다.
+  // 시각만 맞는다고 "영업중"이나 "브레이크타임"으로 단정하지 않는다.
+  const weeklyClosureKnown = restaurant.closedWeekdays !== undefined || restaurant.closedDays.trim() === "없음";
+  if ((isOpenTime || isBreakTime) && !weeklyClosureKnown) {
+    return { kind: "unknown", label: "영업여부 미확인" };
+  }
+
+  if (isBreakTime) {
     return { kind: "break", label: "브레이크타임", detail: `${breakEnd} 영업 재개` };
   }
 
-  if (isWithin(toMinutes(open), toMinutes(close), t)) {
+  if (isOpenTime) {
     return { kind: "open", label: "영업중" };
   }
 
@@ -221,10 +262,8 @@ function RestaurantCard({ restaurant, now }: RestaurantCardProps) {
   const state = getOpenState(restaurant, now);
   const { credentials } = restaurant;
   const reservation = credentials.reservation;
-  // destructive(빨강)는 SOS/기상특보 전용 색이라 "예약 필수"처럼 위험이 아닌 안내 신호에는
-  // 쓰지 않는다. sand 계열(웜톤 안내색)로 구분한다.
   const reservationBadgeClassName =
-    "inline-flex items-center gap-1.5 text-sm font-bold text-sand-deep bg-sand/15 border border-sand/30 rounded-full px-3 py-1.5";
+    "inline-flex items-center gap-1.5 text-sm font-bold text-primary bg-primary/10 border border-primary/25 rounded-full px-3 py-1.5";
 
   return (
     <motion.div
@@ -268,7 +307,7 @@ function RestaurantCard({ restaurant, now }: RestaurantCardProps) {
           {credentials.awards?.map((award) => (
             <span
               key={award}
-              className="text-xs font-bold text-sand-deep bg-sand/15 border border-sand/30 rounded-full px-2.5 py-1"
+              className="text-xs font-bold text-pine bg-pine/10 border border-pine/25 rounded-full px-2.5 py-1"
             >
               🏅 {award}
             </span>

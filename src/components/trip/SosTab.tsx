@@ -85,12 +85,12 @@ const SosTab = () => {
 
       {/* 위급 상황 대응 절차 */}
       {sos.emergencySteps.length > 0 && (
-        <div className="bg-sand/15 rounded-2xl p-4 border border-sand/30">
+        <div className="bg-destructive/10 rounded-2xl p-4 border border-destructive/25">
           <h3 className="text-lg font-bold text-foreground mb-3">위급할 때 이렇게 하세요</h3>
           <ol className="space-y-2">
             {sos.emergencySteps.map((step, i) => (
               <li key={i} className="flex gap-3 items-center">
-                <span className="bg-sand-deep text-white font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-base">
+                <span className="bg-destructive text-destructive-foreground font-bold rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 text-base">
                   {i + 1}
                 </span>
                 <span className="text-base font-medium text-foreground">{step}</span>

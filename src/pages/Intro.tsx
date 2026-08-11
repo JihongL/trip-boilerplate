@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { tripConfig } from "@/config/trip";
 
@@ -26,11 +26,11 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  * tripStart 의 타임존 오프셋을 기준으로 날짜 경계를 계산한다.
  * 브라우저 로컬 타임존이 여행지와 다르더라도 하루가 어긋나지 않는다.
  */
-function computeDDayLabel(): string {
+function computeDDayLabel(now: Date): string {
   const { tripStart, tripEnd } = tripConfig;
   const offsetMinutes = parseOffsetMinutes(tripStart);
 
-  const nowDay = dayStartInOffset(new Date(), offsetMinutes);
+  const nowDay = dayStartInOffset(now, offsetMinutes);
   const startDay = dayStartInOffset(new Date(tripStart), offsetMinutes);
   const endDay = dayStartInOffset(new Date(tripEnd), offsetMinutes);
 
@@ -49,7 +49,20 @@ function computeDDayLabel(): string {
 
 const Intro = ({ onEnter }: IntroProps) => {
   const { meta, intro } = tripConfig;
-  const dDayLabel = useMemo(computeDDayLabel, []);
+  const [now, setNow] = useState(() => new Date());
+  const dDayLabel = useMemo(() => computeDDayLabel(now), [now]);
+
+  useEffect(() => {
+    const refreshNow = () => setNow(new Date());
+    const timer = window.setInterval(refreshNow, 60_000);
+    document.addEventListener("visibilitychange", refreshNow);
+    window.addEventListener("pageshow", refreshNow);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshNow);
+      window.removeEventListener("pageshow", refreshNow);
+    };
+  }, []);
 
   return (
     <div className="header-gradient relative min-h-screen overflow-hidden flex items-center justify-center p-6">

@@ -39,10 +39,10 @@ const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
                 className={`flex min-h-[44px] flex-col items-center justify-center rounded-2xl py-3 transition-all active:scale-95 ${
                   isActive
                     ? isSos
-                      ? "bg-red-500 text-white"
+                      ? "bg-destructive text-destructive-foreground"
                       : "bg-primary text-primary-foreground"
                     : isSos
-                      ? "text-red-500"
+                      ? "text-destructive"
                       : "text-muted-foreground"
                 }`}
               >

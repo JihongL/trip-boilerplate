@@ -26,9 +26,9 @@ const typeFilters: { key: TypeFilter; emoji: string; label: string }[] = [
 
 const CROWD_LABEL: Record<CrowdLevel, string> = { low: "여유", mid: "보통", high: "혼잡" };
 const CROWD_CLASS: Record<CrowdLevel, string> = {
-  low: "bg-success/15 text-success",
-  mid: "bg-sand/25 text-sand-deep",
-  high: "bg-destructive/10 text-destructive",
+  low: "bg-pine/10 text-pine",
+  mid: "bg-secondary text-muted-foreground",
+  high: "bg-primary/10 text-primary",
 };
 
 /* ── Data from config ── */
@@ -121,10 +121,14 @@ const MapTab = () => {
   const [activeType, setActiveType] = useState<TypeFilter>("all");
   const [activeArea, setActiveArea] = useState<AreaFilter>("all");
   const [viewMode, setViewMode] = useState<ViewMode>(isOnline ? "map" : "list");
+  const [tileLoadFailed, setTileLoadFailed] = useState(false);
 
   // 오프라인 폴백: 통신이 끊기면 회색 빈 지도 대신 리스트 뷰로 강제 전환한다.
   useEffect(() => {
-    if (!isOnline) setViewMode("list");
+    if (!isOnline) {
+      setViewMode("list");
+      setTileLoadFailed(false);
+    }
   }, [isOnline]);
 
   const filteredMarkers = useMemo(
@@ -169,10 +173,16 @@ const MapTab = () => {
         {(["map", "list"] as ViewMode[]).map((mode) => (
           <button
             key={mode}
-            onClick={() => setViewMode(mode)}
+            type="button"
+            disabled={mode === "map" && !isOnline}
+            onClick={() => {
+              if (mode === "map" && !isOnline) return;
+              if (mode === "map") setTileLoadFailed(false);
+              setViewMode(mode);
+            }}
             className={`flex-1 flex items-center justify-center gap-1.5 py-3 rounded-xl text-sm font-bold transition-all active:scale-[0.97] ${
               viewMode === mode ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-            }`}
+            } ${mode === "map" && !isOnline ? "cursor-not-allowed opacity-50" : ""}`}
           >
             <span className="text-base">{mode === "map" ? "🗺️" : "📋"}</span>
             <span>{mode === "map" ? "지도" : "목록"}</span>
@@ -183,6 +193,12 @@ const MapTab = () => {
       {!isOnline && (
         <p className="text-xs text-muted-foreground bg-pine/10 border border-pine/20 rounded-xl px-3 py-2">
           📶 오프라인 상태예요. 지도 타일이 보이지 않을 수 있어 목록으로 보여드려요.
+        </p>
+      )}
+
+      {isOnline && tileLoadFailed && (
+        <p className="text-xs text-muted-foreground bg-muted border border-border rounded-xl px-3 py-2">
+          지도 타일을 불러오지 못해 목록으로 전환했어요. 지도 버튼을 누르면 다시 시도해요.
         </p>
       )}
 
@@ -236,7 +252,7 @@ const MapTab = () => {
       </div>
 
       {/* ── Map ── */}
-      {viewMode === "map" && (
+      {viewMode === "map" && isOnline && (
         <div className="rounded-2xl overflow-hidden border border-border shadow-sm" style={{ height: "min(55vh, 400px)" }}>
           <MapContainer
             center={tripConfig.mapCenter}
@@ -247,6 +263,12 @@ const MapTab = () => {
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              eventHandlers={{
+                tileerror: () => {
+                  setTileLoadFailed(true);
+                  setViewMode("list");
+                },
+              }}
             />
             {!flyTo && <FitBounds places={filteredMarkers.map(markerPlace)} />}
             {flyTo && <FlyToPlace lat={flyTo.lat} lng={flyTo.lng} />}
