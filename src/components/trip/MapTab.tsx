@@ -54,6 +54,11 @@ function markerPlace(m: MapMarker): Place {
   return m.data.place;
 }
 
+/** 폴백 검색어용 주소. POI·숙소 모두 address 를 갖고 있다. */
+function markerAddress(m: MapMarker): string | undefined {
+  return m.data.address;
+}
+
 function markerEmoji(m: MapMarker): string {
   return m.kind === "poi" ? m.data.emoji : STAY_EMOJI;
 }
@@ -450,7 +455,12 @@ const MapTab = () => {
 
               {/* Actions */}
               <div className="pt-1">
-                <NavButton place={markerPlace(selected)} name={markerName(selected)} variant="full" />
+                <NavButton
+                  place={markerPlace(selected)}
+                  name={markerName(selected)}
+                  address={markerAddress(selected)}
+                  variant="full"
+                />
               </div>
               <button
                 onClick={closeSheet}

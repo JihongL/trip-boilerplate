@@ -292,7 +292,7 @@ function StayCard({ stay }: { stay: Stay }) {
             <Phone className="w-4 h-4" aria-hidden="true" /> {stay.phone} 전화
           </a>
         )}
-        <NavButton place={stay.place} name={stay.name} variant="full" />
+        <NavButton place={stay.place} name={stay.name} address={stay.address} variant="full" />
       </div>
     </div>
   );

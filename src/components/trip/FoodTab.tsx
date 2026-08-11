@@ -297,7 +297,7 @@ function RestaurantCard({ restaurant, now }: RestaurantCardProps) {
         ))}
 
       <div className="flex flex-wrap items-center gap-2">
-        <NavButton place={restaurant.place} name={restaurant.name} variant="full" className="flex-1 min-w-0" />
+        <NavButton place={restaurant.place} name={restaurant.name} address={restaurant.address} variant="full" className="flex-1 min-w-0" />
         {restaurant.phone && (
           <a
             href={`tel:${restaurant.phone}`}

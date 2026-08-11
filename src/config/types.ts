@@ -20,10 +20,16 @@
 export interface Place {
   lat: number;
   lng: number;
-  /** 카카오맵 장소 URL (국내 최우선) */
-  kakaoPlaceUrl?: string;
-  /** 네이버 지도 장소 URL */
+  /**
+   * 이 지점의 주소. 지도 앱이 없을 때의 웹 폴백 검색어로 쓰인다.
+   * **이름이 일반명사인 장소(농막·계곡·해변 등)는 반드시 채울 것** —
+   * 없으면 이름으로 검색해 엉뚱한 결과가 나온다.
+   */
+  address?: string;
+  /** 네이버 지도 장소 URL (이 앱의 지도 표준) */
   naverPlaceUrl?: string;
+  /** 카카오맵 장소 URL */
+  kakaoPlaceUrl?: string;
 }
 
 /** 지원하는 내비/지도 앱. config 의 navApps 순서대로 버튼이 노출된다. */

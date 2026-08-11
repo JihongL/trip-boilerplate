@@ -8,6 +8,11 @@ import { cn } from "@/lib/utils";
 interface NavButtonProps {
   place: Place;
   name: string;
+  /**
+   * 폴백 검색에 쓸 주소. **있으면 반드시 넘길 것.**
+   * "농막"·"계곡"처럼 이름이 일반명사인 장소는 이름으로 검색하면 엉뚱한 곳이 나온다.
+   */
+  address?: string;
   /** "full" = 라벨 있는 버튼 행, "icon" = 아이콘 하나 (타임라인 항목용) */
   variant?: "full" | "icon";
   className?: string;
@@ -17,6 +22,7 @@ interface NavTargetLinkProps {
   target: NavTarget;
   place: Place;
   name: string;
+  address?: string;
   className: string;
   children: ReactNode;
 }
@@ -29,14 +35,14 @@ interface NavTargetLinkProps {
  * "커스텀 스킴인지"는 URL 이 http(s) 로 시작하지 않는지로 판별해, 개별 앱 이름을 나열하지
  * 않아도 앞으로 스킴 기반 앱이 추가되면 자동으로 같은 처리를 받는다.
  */
-function NavTargetLink({ target, place, name, className, children }: NavTargetLinkProps) {
+function NavTargetLink({ target, place, name, address, className, children }: NavTargetLinkProps) {
   const isCustomScheme = !/^https?:\/\//.test(target.url);
 
   if (isCustomScheme) {
     return (
       <button
         type="button"
-        onClick={() => openNavTarget(target, buildWebFallbackUrl(place, name))}
+        onClick={() => openNavTarget(target, buildWebFallbackUrl(place, name, address))}
         aria-label={`${name} 길찾기 - ${target.label}`}
         className={className}
       >
@@ -58,7 +64,7 @@ function NavTargetLink({ target, place, name, className, children }: NavTargetLi
   );
 }
 
-export default function NavButton({ place, name, variant = "full", className }: NavButtonProps) {
+export default function NavButton({ place, name, address, variant = "full", className }: NavButtonProps) {
   const isOnline = useOnline();
   const targets = buildNavTargets(place, name);
 
@@ -71,6 +77,7 @@ export default function NavButton({ place, name, variant = "full", className }: 
         target={first}
         place={place}
         name={name}
+        address={address}
         className={cn(
           "inline-flex items-center justify-center min-w-11 min-h-11 w-11 h-11 rounded-xl bg-primary text-primary-foreground active:scale-95 transition-transform flex-shrink-0",
           className
@@ -90,6 +97,7 @@ export default function NavButton({ place, name, variant = "full", className }: 
             target={target}
             place={place}
             name={name}
+            address={address}
             className={cn(
               "inline-flex items-center justify-center gap-1.5 min-h-11 px-4 rounded-xl text-sm font-bold active:scale-[0.97] transition-transform",
               i === 0

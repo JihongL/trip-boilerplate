@@ -119,7 +119,7 @@ const SosTab = () => {
                   <p className="text-base font-bold text-foreground">{stay.name}</p>
                   <p className="text-sm text-muted-foreground">{stay.address}</p>
                 </div>
-                <NavButton place={stay.place} name={stay.name} variant="full" />
+                <NavButton place={stay.place} name={stay.name} address={stay.address} variant="full" />
               </div>
             ))}
           </div>

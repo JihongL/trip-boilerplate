@@ -17,6 +17,8 @@ export const stays: Stay[] = [
       // 역지오코딩 확인: 구룡령로, 갈천리, 서면, 양양군.
       lat: 37.9051,
       lng: 128.5268,
+      // "농막"은 일반명사라 이름 검색이 무의미하다 — 폴백은 반드시 주소로.
+      address: "강원 양양군 서면 갈천리 12",
     },
     // checkIn/checkOut 지정 없음
     facilities: {
@@ -53,6 +55,7 @@ export const stays: Stay[] = [
       // 진부면 탑동길 도로 기준 좌표 (Nominatim 지오코딩, 지번 단위 정밀도)
       lat: 37.6957,
       lng: 128.5577,
+      address: "강원 평창군 진부면 탑동길 108-50",
     },
     checkIn: "15:00",
     checkOut: "11:00",
@@ -94,7 +97,7 @@ export const weatherLocations: WeatherLocation[] = [
 // 루트 정류점
 // ─────────────────────────────────────────────
 
-const originPlace: Place = { lat: 37.5838, lng: 126.9094 };
+const originPlace: Place = { lat: 37.5838, lng: 126.9094, address: "서울 은평구 증산역" };
 
 export const ORIGIN: { place: Place; stop: RouteStop } = {
   place: originPlace,

@@ -102,10 +102,10 @@ export function buildNavTargets(place: Place, name: string, apps?: NavApp[]): Na
  * 장소 상세 보기 URL. 이 앱의 지도 표준은 **네이버 지도**이므로 네이버를 먼저 본다.
  * (카카오는 맛집 평점 출처로만 쓰고 지도 연동에는 쓰지 않는다.)
  */
-export function buildPlaceUrl(place: Place, name: string): string {
+export function buildPlaceUrl(place: Place, name: string, address?: string): string {
   if (place.naverPlaceUrl) return place.naverPlaceUrl;
   if (place.kakaoPlaceUrl) return place.kakaoPlaceUrl;
-  return buildNaverWebUrl(place, name);
+  return buildNaverWebUrl(name, place.address ?? address);
 }
 
 /**
@@ -113,16 +113,23 @@ export function buildPlaceUrl(place: Place, name: string): string {
  *
  * 지도 표준이 네이버이므로 폴백도 네이버로 보낸다. 좌표 기반 길찾기 https 경로는
  * 네이버 지도 UI 개편 이후 안정적으로 문서화된 형태가 없어, 확실히 동작하는 검색 URL을 쓴다.
- * 길찾기가 아니라 검색이지만, 폴백의 목적은 "사용자를 빈 화면에 가두지 않는 것"이고
- * 네이버 안에서 길찾기로 이어갈 수 있으므로 이 절충이 타당하다.
  */
-export function buildWebFallbackUrl(place: Place, name: string): string {
+export function buildWebFallbackUrl(place: Place, name: string, address?: string): string {
   if (place.naverPlaceUrl) return place.naverPlaceUrl;
-  return buildNaverWebUrl(place, name);
+  // place.address 가 최우선 — 일정 타임라인처럼 호출부가 주소를 모르는 경우까지 커버한다.
+  return buildNaverWebUrl(name, place.address ?? address);
 }
 
-function buildNaverWebUrl(place: Place, name: string): string {
-  return `https://map.naver.com/p/search/${encodeURIComponent(name)}`;
+/**
+ * 네이버 지도 검색 URL.
+ *
+ * **주소가 있으면 반드시 주소로 검색한다.** 이름으로 검색하면 "농막"·"계곡"처럼
+ * 일반명사인 장소가 엉뚱한 검색 결과로 떨어진다. 주소는 지번/도로명 모두 정확히 해석된다.
+ * 이름은 주소가 없을 때만 쓰는 최후 수단이다.
+ */
+function buildNaverWebUrl(name: string, address?: string): string {
+  const query = address?.trim() || name;
+  return `https://map.naver.com/p/search/${encodeURIComponent(query)}`;
 }
 
 const APP_SWITCH_FALLBACK_DELAY_MS = 1500;
