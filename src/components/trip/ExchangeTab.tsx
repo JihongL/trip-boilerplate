@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useExchangeRate } from "@/hooks/useExchangeRate";
 import { tripConfig } from "@/config/trip";
 
+// exchange 는 해외여행 전용 옵셔널 필드. 국내여행 config 에는 없다.
 const ex = tripConfig.exchange;
 
 const ExchangeTab = () => {
@@ -9,7 +10,7 @@ const ExchangeTab = () => {
   const [vndInput, setVndInput] = useState("");
   const { data, isLoading } = useExchangeRate();
 
-  const rate = data?.rate ?? ex.fallbackRate;
+  const rate = data?.rate ?? ex?.fallbackRate ?? 1;
   const isFallback = data?.isFallback ?? true;
   const prevRate = useRef(rate);
   const lastEdited = useRef<"krw" | "vnd">("krw");
@@ -43,6 +44,9 @@ const ExchangeTab = () => {
     setVndInput(val);
     setKrwInput(val ? String(Math.round(Number(val) / rate)) : "");
   };
+
+  // 국내여행 config 에는 exchange 가 없다. 탭 자체가 노출되지 않지만 방어한다.
+  if (!ex) return null;
 
   const presets = ex.localPrices.map((p) => ({ label: p.label, vnd: p.amount }));
 

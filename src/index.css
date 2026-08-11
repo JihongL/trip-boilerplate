@@ -5,46 +5,88 @@
 @tailwind utilities;
 
 @layer base {
+  /**
+   * 테마: 바다와 소나무 (2026 강원도 여름휴가)
+   *
+   * 동해 블루와 소나무 그린은 둘 다 차가운 중명도라 2색만으로는 시각 계층이 서지 않는다.
+   * 웜톤 액센트(백사장 샌드)를 유일한 강조색으로 두고 "지금/오늘/영업중"을 전담시킨다.
+   *
+   *   Primary   동해 블루   #1E6F9F  헤더 · 주요 액션 · 링크
+   *   Pine      소나무 그린 #2E5D4B  지역 배지 · 경로 · 확정 상태
+   *   Accent    백사장 샌드 #E5B77C  현재 시각 · CTA · 영업중  ← 유일한 웜톤
+   *
+   * 8월 강원도 낮은 야외 직사광선 환경이므로 라이트모드 고대비를 우선한다.
+   * 다크모드는 야간 운전 시 눈부심 방지용 최소 대응.
+   */
   :root {
-    --background: 30 25% 97%;
-    --foreground: 20 20% 15%;
-    --card: 30 20% 99%;
-    --card-foreground: 20 20% 15%;
-    --primary: 20 85% 45%;
+    --background: 200 23% 97%;
+    --foreground: 203 32% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 203 32% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 203 32% 13%;
+    --primary: 202 68% 37%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 30 30% 93%;
-    --secondary-foreground: 20 40% 30%;
-    --muted: 25 15% 91%;
-    --muted-foreground: 20 12% 35%;
-    --accent: 170 40% 45%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 70% 55%;
+    --secondary: 200 30% 93%;
+    --secondary-foreground: 157 34% 25%;
+    --muted: 200 18% 91%;
+    --muted-foreground: 203 15% 38%;
+    --accent: 34 67% 69%;
+    --accent-foreground: 203 32% 13%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-    --border: 25 18% 88%;
-    --input: 25 18% 88%;
-    --ring: 20 85% 45%;
+    --border: 200 18% 87%;
+    --input: 200 18% 87%;
+    --ring: 202 68% 37%;
     --radius: 1rem;
     --bottom-nav-height: 5.5rem;
+
+    /* 테마 고유 토큰 */
+    --ocean: 202 68% 37%;
+    --ocean-light: 202 60% 52%;
+    --sky: 200 70% 62%;
+    --pine: 157 34% 27%;
+    --pine-light: 157 30% 42%;
+    --sand: 34 67% 69%;
+    --sand-deep: 30 60% 55%;
+    --coral: 14 72% 58%;
+    --coral-light: 14 78% 68%;
+    --success: 157 34% 32%;
+    --success-light: 157 30% 45%;
   }
 
   .dark {
-    --background: 20 15% 10%;
-    --foreground: 30 20% 90%;
-    --card: 20 15% 13%;
-    --card-foreground: 30 20% 90%;
-    --primary: 20 80% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 20 20% 20%;
-    --secondary-foreground: 20 40% 80%;
-    --muted: 20 10% 18%;
-    --muted-foreground: 20 12% 65%;
-    --accent: 170 35% 50%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62% 40%;
+    --background: 203 30% 10%;
+    --foreground: 200 20% 92%;
+    --card: 203 26% 14%;
+    --card-foreground: 200 20% 92%;
+    --popover: 203 26% 14%;
+    --popover-foreground: 200 20% 92%;
+    --primary: 202 60% 55%;
+    --primary-foreground: 203 40% 10%;
+    --secondary: 203 20% 20%;
+    --secondary-foreground: 157 30% 75%;
+    --muted: 203 18% 19%;
+    --muted-foreground: 200 12% 66%;
+    --accent: 34 55% 62%;
+    --accent-foreground: 203 40% 10%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 20 10% 20%;
-    --input: 20 10% 20%;
-    --ring: 20 80% 50%;
+    --border: 203 16% 22%;
+    --input: 203 16% 22%;
+    --ring: 202 60% 55%;
+
+    --ocean: 202 60% 55%;
+    --ocean-light: 202 55% 65%;
+    --sky: 200 55% 60%;
+    --pine: 157 30% 45%;
+    --pine-light: 157 28% 56%;
+    --sand: 34 55% 62%;
+    --sand-deep: 30 50% 52%;
+    --coral: 14 62% 60%;
+    --coral-light: 14 66% 68%;
+    --success: 157 32% 45%;
+    --success-light: 157 28% 56%;
   }
 }
 
@@ -80,8 +122,43 @@
   }
 
   .card-highlight {
-    background: linear-gradient(135deg, hsl(20 85% 45%) 0%, hsl(35 90% 50%) 100%);
+    background: linear-gradient(135deg, hsl(var(--ocean)) 0%, hsl(var(--pine)) 100%);
     @apply rounded-2xl p-5 text-white shadow-md;
+  }
+
+  /** 사진 자산이 없는 여행의 헤더 배경. 대관령 능선 SVG와 겹쳐 쓴다. */
+  .header-gradient {
+    background: linear-gradient(160deg, hsl(var(--ocean)) 0%, hsl(202 60% 30%) 45%, hsl(var(--pine)) 100%);
+  }
+
+  /**
+   * 지역 배지. Tailwind 기본 팔레트(bg-sky-100 등)를 쓰면 테마 3색 밖의 색이 떠다니고
+   * 다크모드에서 파스텔이 튀므로, 테마 토큰 기반으로 정의한다.
+   */
+  .area-badge-ocean {
+    background-color: hsl(var(--ocean) / 0.12);
+    color: hsl(var(--ocean));
+    border: 1px solid hsl(var(--ocean) / 0.28);
+  }
+  .area-badge-sky {
+    background-color: hsl(var(--sky) / 0.16);
+    color: hsl(var(--sky));
+    border: 1px solid hsl(var(--sky) / 0.32);
+  }
+  .area-badge-pine {
+    background-color: hsl(var(--pine) / 0.12);
+    color: hsl(var(--pine));
+    border: 1px solid hsl(var(--pine) / 0.28);
+  }
+  .dark .area-badge-ocean,
+  .dark .area-badge-sky,
+  .dark .area-badge-pine {
+    background-color: hsl(var(--muted));
+  }
+
+  /** 현재/지금을 가리키는 유일한 웜톤 강조 */
+  .accent-ring {
+    box-shadow: 0 0 0 2px hsl(var(--sand)), 0 0 0 5px hsl(var(--sand) / 0.28);
   }
 
   .card-sos {

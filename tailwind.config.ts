@@ -60,11 +60,18 @@ export default {
           light: "hsl(var(--ocean-light))",
         },
         sky: "hsl(var(--sky))",
+        pine: {
+          DEFAULT: "hsl(var(--pine))",
+          light: "hsl(var(--pine-light))",
+        },
         coral: {
           DEFAULT: "hsl(var(--coral))",
           light: "hsl(var(--coral-light))",
         },
-        sand: "hsl(var(--sand))",
+        sand: {
+          DEFAULT: "hsl(var(--sand))",
+          deep: "hsl(var(--sand-deep))",
+        },
         success: {
           DEFAULT: "hsl(var(--success))",
           light: "hsl(var(--success-light))",
