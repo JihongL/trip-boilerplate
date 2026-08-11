@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapContainer, TileLayer, Marker, Polyline } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Phone, AlertTriangle } from "lucide-react";
+import { Phone, AlertTriangle, ChevronDown } from "lucide-react";
 import { tripConfig } from "@/config/trip";
 import { useTripWeather } from "@/hooks/useWeather";
 import { useOnline } from "@/hooks/useOnline";
@@ -203,6 +203,60 @@ function RouteSection({ stops }: { stops: RouteStop[] }) {
 }
 
 // ─────────────────────────────────────────────
+// 접이식 섹션 — 부가 정보는 기본으로 접되, 헤더 자체가 44px 이상의 탭 타깃이 되게 한다.
+// ─────────────────────────────────────────────
+
+function CollapsibleSection({
+  title,
+  summary,
+  children,
+  className,
+}: {
+  title: string;
+  summary?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const contentId = useId();
+
+  return (
+    <div className={cn("overflow-hidden", className)}>
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={contentId}
+        onClick={() => setIsOpen((open) => !open)}
+        className="flex min-h-11 w-full items-center justify-between gap-3 text-left rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+      >
+        <span className="min-w-0 flex-1 text-base font-bold text-foreground">{title}</span>
+        <span className="flex flex-shrink-0 items-center gap-2">
+          {summary}
+          <ChevronDown
+            className={cn("h-5 w-5 text-muted-foreground transition-transform duration-200", isOpen && "rotate-180")}
+            aria-hidden="true"
+          />
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            id={contentId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <div className="pt-3">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────
 // 숙소 카드 — 오프라인에서도 반드시 보여야 하는 정보. 네트워크에 전혀 의존하지 않는다.
 // ─────────────────────────────────────────────
 
@@ -221,7 +275,7 @@ function StayCard({ stay }: { stay: Stay }) {
   const activeFacilities = FACILITY_LABELS.filter((f) => stay.facilities[f.key]);
 
   return (
-    <div className="card-base space-y-4">
+    <div className="card-base space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold text-muted-foreground">숙소</p>
@@ -250,50 +304,7 @@ function StayCard({ stay }: { stay: Stay }) {
         </div>
       )}
 
-      {stay.accessNote && (
-        <div className="flex gap-2 rounded-xl border border-coral/30 bg-coral/10 p-3">
-          <AlertTriangle className="w-5 h-5 text-coral flex-shrink-0 mt-0.5" aria-hidden="true" />
-          <p className="text-sm text-coral leading-relaxed font-medium">{stay.accessNote}</p>
-        </div>
-      )}
-
-      {activeFacilities.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {activeFacilities.map((f) => (
-            <span key={f.key} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
-              {f.emoji} {f.label}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {stay.bring.length > 0 && (
-        <div>
-          <p className="text-xs font-bold text-muted-foreground mb-1.5">챙길 것</p>
-          <ul className="space-y-1">
-            {stay.bring.map((item, i) => (
-              <li key={i} className="text-sm text-foreground">
-                · {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {stay.cautions.length > 0 && (
-        <div>
-          <p className="text-xs font-bold text-coral mb-1.5">주의</p>
-          <ul className="space-y-1">
-            {stay.cautions.map((item, i) => (
-              <li key={i} className="text-sm text-foreground">
-                · {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      <div className="flex flex-col gap-2 pt-1">
+      <div className="flex flex-col gap-2">
         {stay.phone && (
           <a
             href={`tel:${stay.phone.replace(/[^+\d]/g, "")}`}
@@ -304,6 +315,57 @@ function StayCard({ stay }: { stay: Stay }) {
         )}
         <NavButton place={stay.place} name={stay.name} address={stay.address} variant="full" />
       </div>
+
+      <CollapsibleSection title="숙소 상세 정보" className="border-t border-border pt-1">
+        <div className="space-y-4">
+          {activeFacilities.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {activeFacilities.map((f) => (
+                <span key={f.key} className="text-xs font-semibold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
+                  {f.emoji} {f.label}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {stay.bring.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-muted-foreground mb-1.5">챙길 것</p>
+              <ul className="space-y-1">
+                {stay.bring.map((item, i) => (
+                  <li key={i} className="text-sm text-foreground">
+                    · {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {stay.cautions.length > 0 && (
+            <div>
+              <p className="text-xs font-bold text-muted-foreground mb-1.5">주의</p>
+              <ul className="space-y-1">
+                {stay.cautions.map((item, i) => (
+                  <li key={i} className="text-sm text-foreground">
+                    · {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </CollapsibleSection>
+    </div>
+  );
+}
+
+function StayAccessWarning({ stay }: { stay: Stay }) {
+  if (!stay.accessNote) return null;
+
+  return (
+    <div role="note" className="rounded-r-2xl border border-l-4 border-border border-l-pine bg-muted/60 p-4">
+      <p className="text-sm font-bold text-foreground">⚠️ {stay.name} 진입 안내</p>
+      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{stay.accessNote}</p>
     </div>
   );
 }
@@ -448,7 +510,17 @@ function WeatherSection({
 // 체크리스트 — 출발 전 준비물 · 하루 준비물 공용. localStorage 저장은 실패해도 무시한다.
 // ─────────────────────────────────────────────
 
-function ChecklistCard({ title, items, storageKey }: { title: string; items: string[]; storageKey: string }) {
+function ChecklistCard({
+  title,
+  items,
+  storageKey,
+  collapsible = false,
+}: {
+  title: string;
+  items: string[];
+  storageKey: string;
+  collapsible?: boolean;
+}) {
   const [checked, setChecked] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -472,6 +544,49 @@ function ChecklistCard({ title, items, storageKey }: { title: string; items: str
 
   const doneCount = items.filter((item) => checked[item]).length;
 
+  const checklistItems = (
+    <div className="space-y-1">
+      {items.map((item) => {
+        const isChecked = !!checked[item];
+        return (
+          <label
+            key={item}
+            className={cn(
+              "flex items-center gap-3 min-h-11 px-2 rounded-xl cursor-pointer transition-colors",
+              isChecked ? "bg-secondary/50" : "bg-transparent"
+            )}
+          >
+            <input
+              type="checkbox"
+              className="w-5 h-5 accent-primary flex-shrink-0"
+              checked={isChecked}
+              onChange={() => toggle(item)}
+            />
+            <span className={cn("text-sm", isChecked ? "text-muted-foreground line-through" : "text-foreground")}>
+              {item}
+            </span>
+          </label>
+        );
+      })}
+    </div>
+  );
+
+  if (collapsible) {
+    return (
+      <CollapsibleSection
+        title={title}
+        summary={(
+          <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary tabular-nums">
+            {doneCount}/{items.length}
+          </span>
+        )}
+        className="card-base"
+      >
+        {checklistItems}
+      </CollapsibleSection>
+    );
+  }
+
   return (
     <div className="card-base">
       <div className="flex items-center justify-between mb-3">
@@ -480,30 +595,7 @@ function ChecklistCard({ title, items, storageKey }: { title: string; items: str
           {doneCount}/{items.length}
         </span>
       </div>
-      <div className="space-y-1">
-        {items.map((item) => {
-          const isChecked = !!checked[item];
-          return (
-            <label
-              key={item}
-              className={cn(
-                "flex items-center gap-3 min-h-11 px-2 rounded-xl cursor-pointer transition-colors",
-                isChecked ? "bg-secondary/50" : "bg-transparent"
-              )}
-            >
-              <input
-                type="checkbox"
-                className="w-5 h-5 accent-primary flex-shrink-0"
-                checked={isChecked}
-                onChange={() => toggle(item)}
-              />
-              <span className={cn("text-sm", isChecked ? "text-muted-foreground line-through" : "text-foreground")}>
-                {item}
-              </span>
-            </label>
-          );
-        })}
-      </div>
+      {checklistItems}
     </div>
   );
 }
@@ -598,39 +690,11 @@ const TodayTab = () => {
   return (
     <div className="space-y-4 fade-in">
       {phase === "before" && (
-        <>
-          <div className="card-highlight text-center">
-            <p className="text-sm font-medium opacity-90">{tripConfig.headerLabel}</p>
-            <p className="text-5xl font-black mt-2 tabular-nums">D-{daysLeft}</p>
-            <p className="text-sm opacity-90 mt-1">{tripConfig.meta.subtitle}</p>
-          </div>
-
-          <ChecklistCard
-            title="출발 전 체크리스트"
-            items={tripConfig.checklist.map((c) => c.text)}
-            storageKey="trip-checklist"
-          />
-
-          <div className="card-base space-y-3">
-            <h4 className="text-base font-bold text-foreground">옷차림 · 짐</h4>
-            <div>
-              <p className="text-xs font-bold text-primary mb-1.5">👕 옷차림</p>
-              <ul className="space-y-1 text-sm text-foreground">
-                {tripConfig.packingGuide.clothing.map((item, i) => (
-                  <li key={i}>· {item}</li>
-                ))}
-              </ul>
-            </div>
-            <div className="border-t border-border pt-3">
-              <p className="text-xs font-bold text-primary mb-1.5">🧳 짐</p>
-              <ul className="space-y-1 text-sm text-foreground">
-                {tripConfig.packingGuide.luggage.map((item, i) => (
-                  <li key={i}>· {item}</li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </>
+        <div className="card-highlight text-center">
+          <p className="text-sm font-medium opacity-90">{tripConfig.headerLabel}</p>
+          <p className="text-5xl font-black mt-2 tabular-nums">D-{daysLeft}</p>
+          <p className="text-sm opacity-90 mt-1">{tripConfig.meta.subtitle}</p>
+        </div>
       )}
 
       {phase === "after" && (
@@ -737,10 +801,15 @@ const TodayTab = () => {
             <WeatherAlertBanner alerts={weather.alerts} />
           )}
 
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-bold text-foreground min-w-0 truncate">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-lg font-bold text-foreground min-w-0">
               Day {selectedDay.day} · {selectedDay.title}
             </h3>
+            {stay && (
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-md border border-pine/25 bg-pine/10 text-pine flex-shrink-0">
+                🏡 {stay.name} · {stay.nights.split("·").at(-1)?.trim() ?? stay.nights}
+              </span>
+            )}
             <span
               className={cn(
                 "text-xs font-semibold px-2 py-0.5 rounded-md border flex-shrink-0",
@@ -757,11 +826,7 @@ const TodayTab = () => {
             <NextUpCard event={effectiveDay.schedule[nextEventIndex]} />
           )}
 
-          {stay && <StayCard stay={stay} />}
-
-          {effectiveDay.stops && effectiveDay.stops.length > 0 && <RouteSection stops={effectiveDay.stops} />}
-
-          <WeatherSection day={effectiveDay} weather={weather} label={weatherLabel} isOnline={isOnline} now={now} />
+          {stay?.accessNote && <StayAccessWarning stay={stay} />}
 
           {/* Timeline */}
           <div className="card-base">
@@ -813,6 +878,10 @@ const TodayTab = () => {
             </div>
           </div>
 
+          {effectiveDay.stops && effectiveDay.stops.length > 0 && <RouteSection stops={effectiveDay.stops} />}
+
+          <WeatherSection day={effectiveDay} weather={weather} label={weatherLabel} isOnline={isOnline} now={now} />
+
           {/* Day tip */}
           <div className="rounded-2xl p-4 border border-primary/18 bg-primary/6">
             <p className="text-sm font-bold text-primary mb-1">{tripConfig.dayTipLabel}</p>
@@ -839,8 +908,42 @@ const TodayTab = () => {
               ))}
             </div>
           )}
+
+          {stay && <StayCard stay={stay} />}
         </motion.div>
       </AnimatePresence>
+
+      {phase === "before" && (
+        <div className="space-y-4">
+          <ChecklistCard
+            title="출발 전 체크리스트"
+            items={tripConfig.checklist.map((c) => c.text)}
+            storageKey="trip-checklist"
+            collapsible
+          />
+
+          <CollapsibleSection title="옷차림 · 짐" className="card-base">
+            <div className="space-y-3">
+              <div>
+                <p className="text-xs font-bold text-primary mb-1.5">👕 옷차림</p>
+                <ul className="space-y-1 text-sm text-foreground">
+                  {tripConfig.packingGuide.clothing.map((item, i) => (
+                    <li key={i}>· {item}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="border-t border-border pt-3">
+                <p className="text-xs font-bold text-primary mb-1.5">🧳 짐</p>
+                <ul className="space-y-1 text-sm text-foreground">
+                  {tripConfig.packingGuide.luggage.map((item, i) => (
+                    <li key={i}>· {item}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </CollapsibleSection>
+        </div>
+      )}
     </div>
   );
 };
